@@ -23,8 +23,7 @@ export function ListingCard({
   const available = listing.rooms.filter((r) => r.status === "AVAILABLE").length;
 
   return (
-    <article className="card interactive-card group overflow-hidden">
-      <Link href={href} className="block">
+    <Link href={href} className="card interactive-card group block overflow-hidden">
         <div className="relative aspect-[16/10] bg-paper-sunk">
           {image ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -43,14 +42,10 @@ export function ListingCard({
             )}
           </div>
         </div>
-      </Link>
-
       <div className="p-4">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <h3 className="truncate text-[17px]">
-              <Link href={href} className="hover:text-pine-dark">{listing.title}</Link>
-            </h3>
+            <h3 className="truncate text-[17px] hover:text-pine-dark">{listing.title}</h3>
             <p className="mt-0.5 truncate text-[14px] text-ink-soft">
               {publicLocation(listing.property)}
               {typeof distance === "number" && (
@@ -93,6 +88,6 @@ export function ListingCard({
           {listing.company.verification === "APPROVED" && <VerifiedBadge />}
         </div>
       </div>
-    </article>
+    </Link>
   );
 }

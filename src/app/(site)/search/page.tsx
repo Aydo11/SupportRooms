@@ -17,15 +17,19 @@ export const dynamic = "force-dynamic";
 export default async function SearchPage({
   searchParams,
 }: {
-  searchParams: SearchParams & { view?: string };
+  searchParams: Promise<SearchParams & { view?: string }>;
 }) {
-  const view = searchParams.view === "map" ? "map" : "list";
+  // Next.js 16 provides searchParams asynchronously. Awaiting them here is
+  // important: otherwise view=map (and the other search filters) are silently
+  // ignored during the server render.
+  const params = await searchParams;
+  const view = params.view === "map" ? "map" : "list";
 
   const [results, facets, user, map] = await Promise.all([
-    searchListings(searchParams),
-    searchFacets(searchParams),
+    searchListings(params),
+    searchFacets(params),
     getCurrentUser(),
-    view === "map" ? searchMapPins(searchParams) : Promise.resolve(null),
+    view === "map" ? searchMapPins(params) : Promise.resolve(null),
   ]);
 
   // Compatibility is only shown to people who have told us what they need.
@@ -58,10 +62,10 @@ export default async function SearchPage({
         }).score
       : undefined;
 
-  const where = searchParams.bbox
+  const where = params.bbox
     ? " in this area"
-    : searchParams.where
-      ? ` within ${results.radius} miles of ${searchParams.where}`
+    : params.where
+      ? ` within ${results.radius} miles of ${params.where}`
       : " across the UK";
 
   return (
@@ -101,7 +105,7 @@ export default async function SearchPage({
 
           {view === "map" && map ? (
             <div className="mt-5">
-              <MapView
+                <MapView
                 pins={map.pins}
                 centre={map.centre}
                 capped={map.capped}
