@@ -22,9 +22,10 @@ import { brand } from "@/brand.config";
 
 export const dynamic = "force-dynamic";
 
-export async function generateMetadata({ params }: { params: { id: string } }) {
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const listing = await db.listing.findUnique({
-    where: { id: params.id },
+    where: { id },
     select: { title: true, summary: true, property: { select: { city: true } } },
   });
   return {
@@ -37,15 +38,16 @@ export default async function ListingPage({
   params,
   searchParams,
 }: {
-  params: { id: string };
-  searchParams: { ref?: string };
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ ref?: string }>;
 }) {
-  const [listing, user] = await Promise.all([getListing(params.id), getCurrentUser()]);
+  const [{ id }, query] = await Promise.all([params, searchParams]);
+  const [listing, user] = await Promise.all([getListing(id), getCurrentUser()]);
   if (!listing) notFound();
 
   // Sponsored click-through, counted here rather than in the browser so it works
   // without JavaScript and can't be inflated by a script.
-  if (searchParams.ref === "sponsored") await recordSponsoredClickAction(params.id);
+  if (query.ref === "sponsored") await recordSponsoredClickAction(id);
 
   const isOwner = user?.staffOf.some((s) => s.companyId === listing.companyId) ?? false;
   if (listing.status !== "ACTIVE" && !isOwner && user?.role !== "ADMIN") notFound();
