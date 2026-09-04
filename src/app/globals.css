@@ -1,0 +1,154 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --font-sans: "Instrument Sans", system-ui, sans-serif;
+    --font-display: "Newsreader", Georgia, serif;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-paper text-ink antialiased;
+    font-feature-settings: "cv05" 1;
+    min-height: 100vh;
+  }
+
+  h1, h2, h3, h4 {
+    @apply font-display font-normal text-ink;
+    letter-spacing: -0.01em;
+  }
+
+  /* Visible, consistent focus. Never removed. */
+  :focus-visible {
+    @apply outline-none ring-2 ring-pine ring-offset-2 ring-offset-white rounded-[4px];
+  }
+
+  ::selection {
+    @apply bg-pine-light text-pine-dark;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@layer components {
+  .shell {
+    @apply mx-auto w-full max-w-shell px-5 sm:px-8;
+  }
+
+  .card {
+    @apply rounded-card border border-line bg-paper-card shadow-[0_1px_2px_rgba(21,42,58,.03)];
+  }
+
+  .label {
+    @apply block text-[13px] font-medium text-ink-soft mb-1.5;
+  }
+
+  .field {
+    @apply w-full rounded-[10px] border border-line bg-white px-3.5 py-2.5 text-[15px] text-ink
+           placeholder:text-ink-faint transition-[border-color,box-shadow,background-color] duration-200 focus:border-pine focus:outline-none focus:ring-2 focus:ring-pine/25;
+  }
+
+  .field-error {
+    @apply border-clay focus:border-clay focus:ring-clay/25;
+  }
+
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-[10px] px-4 py-2.5 text-[15px]
+           font-medium transition-[color,background-color,border-color,box-shadow,transform] duration-200
+           disabled:pointer-events-none disabled:opacity-60;
+  }
+
+  .btn-primary {
+    @apply btn bg-pine text-white shadow-[0_3px_8px_rgba(31,111,92,.16)] hover:-translate-y-px hover:bg-pine-dark hover:shadow-[0_7px_16px_rgba(31,111,92,.2)] active:translate-y-0;
+  }
+
+  .btn-secondary {
+    @apply btn border border-line-strong bg-white text-ink hover:-translate-y-px hover:bg-paper-sunk hover:shadow-raise active:translate-y-0;
+  }
+
+  .btn-ghost {
+    @apply btn text-ink-soft hover:bg-paper-sunk hover:text-ink;
+  }
+
+  .btn-danger {
+    @apply btn border border-clay/40 bg-clay/5 text-clay hover:bg-clay/10;
+  }
+
+  .chip {
+    @apply inline-flex items-center gap-1.5 rounded-pill border border-line bg-white
+           px-3 py-1 text-[13px] text-ink-soft transition-[color,background-color,border-color,transform] duration-200;
+  }
+
+  .chip-active {
+    @apply border-pine bg-pine-light text-pine-dark;
+  }
+
+  .prose-advert {
+    @apply text-[16px] leading-[1.7] text-ink-soft;
+  }
+  .prose-advert p { @apply mb-4; }
+  .prose-advert h3 { @apply mt-6 mb-2 text-lg; }
+  .prose-advert ul { @apply mb-4 list-disc pl-5 space-y-1; }
+  .prose-advert ol { @apply mb-4 list-decimal pl-5 space-y-1; }
+
+  .eyebrow {
+    @apply inline-flex items-center gap-2 rounded-pill border border-pine/20 bg-pine-light px-3 py-1.5 text-[12px] font-semibold tracking-[0.08em] text-pine-dark;
+  }
+
+  .interactive-card {
+    @apply transition-[border-color,box-shadow,transform] duration-300 ease-out hover:-translate-y-1 hover:border-line-strong hover:shadow-float;
+  }
+}
+
+@layer utilities {
+  .surface-grid {
+    background-image: linear-gradient(rgba(31,111,92,.055) 1px, transparent 1px), linear-gradient(90deg, rgba(31,111,92,.055) 1px, transparent 1px);
+    background-size: 28px 28px;
+  }
+
+  .soft-orb {
+    background: radial-gradient(circle, rgba(228,240,235,.95) 0%, rgba(228,240,235,0) 68%);
+  }
+}
+
+/* ---------------------------------------------------------------- map layer
+   Leaflet renders markers as plain HTML, so the pins are styled here rather
+   than with utility classes. */
+@layer components {
+  .map-pin {
+    @apply inline-flex items-center justify-center rounded-pill border border-line bg-white px-2.5 py-1
+           text-[12px] font-semibold text-pine-dark shadow-raise;
+  }
+  .map-pin-full {
+    @apply bg-paper-sunk text-ink-faint;
+  }
+  .map-pin-sponsored {
+    @apply border-clay/40 bg-clay-light text-clay;
+  }
+  .map-cluster {
+    @apply grid h-10 w-10 place-items-center rounded-full border-2 border-white bg-pine
+           text-[13px] font-semibold text-white shadow-raise;
+  }
+}
+
+/* Leaflet's own controls, nudged to match the rest of the interface. */
+.leaflet-container {
+  font-family: var(--font-sans), system-ui, sans-serif;
+  background: #EAEEE9;
+}
+.leaflet-bar a {
+  color: #152A3A;
+}
+.leaflet-control-attribution {
+  font-size: 11px;
+}
