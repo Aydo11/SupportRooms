@@ -7,16 +7,17 @@ import { Thread } from "@/components/thread";
 export const metadata = { title: "Conversation" };
 export const dynamic = "force-dynamic";
 
-export default async function ConversationPage({ params }: { params: { id: string } }) {
-  const user = await requireUser(`/messages/${params.id}`);
+export default async function ConversationPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const user = await requireUser(`/messages/${id}`);
 
   const participant = await db.conversationParticipant.findUnique({
-    where: { conversationId_userId: { conversationId: params.id, userId: user.id } },
+    where: { conversationId_userId: { conversationId: id, userId: user.id } },
   });
   if (!participant) notFound();
 
   const conversation = await db.conversation.findUnique({
-    where: { id: params.id },
+    where: { id },
     include: {
       listing: { select: { id: true, title: true } },
       lookingForAd: { select: { id: true, title: true } },
@@ -27,11 +28,11 @@ export default async function ConversationPage({ params }: { params: { id: strin
   if (!conversation) notFound();
 
   await db.conversationParticipant.update({
-    where: { conversationId_userId: { conversationId: params.id, userId: user.id } },
+    where: { conversationId_userId: { conversationId: id, userId: user.id } },
     data: { lastReadAt: new Date() },
   });
   await db.message.updateMany({
-    where: { conversationId: params.id, senderId: { not: user.id }, readAt: null },
+    where: { conversationId: id, senderId: { not: user.id }, readAt: null },
     data: { readAt: new Date() },
   });
 
