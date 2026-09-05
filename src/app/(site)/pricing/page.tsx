@@ -5,6 +5,7 @@ import { brand } from "@/brand.config";
 import { billingIsLive } from "@/lib/billing";
 import { getCurrentUser } from "@/lib/session";
 import { PricingTabs } from "@/components/pricing-tabs";
+import { SponsorDurationPicker } from "@/components/sponsor-duration-picker";
 
 export const metadata = { title: "Membership and pricing" };
 export const dynamic = "force-dynamic";
@@ -142,36 +143,14 @@ export default async function PricingPage() {
               Put a live vacancy in up to three clearly labelled positions at the top of relevant first-page searches, with a highlighted map pin.
             </p>
           </div>
-          <ul className="grid content-start gap-2 text-[14px] text-ink-soft sm:grid-cols-2 lg:grid-cols-1">
+          <ul className="flex flex-col gap-2.5 text-[14px] text-ink-soft">
             <Feature>Only shown when the advert matches the person&apos;s filters</Feature>
             <Feature>Always labelled Sponsored, including on the map</Feature>
             <Feature>Does not affect verification, moderation or organic ranking</Feature>
           </ul>
         </div>
         <div className="p-6 lg:p-8">
-          <div className="flex flex-wrap items-end justify-between gap-3">
-            <div><p className="text-[12px] font-semibold uppercase tracking-[0.08em] text-ink-faint">Choose a duration</p><h3 className="mt-1 text-[20px]">One-off payment, no subscription</h3></div>
-            <p className="text-[13px] text-ink-faint">Longer packages receive the higher sponsored position.</p>
-          </div>
-          <div className="mt-5 grid gap-3 sm:grid-cols-3">
-          {[
-            ["7 days", "£19", "£2.71/day", "Fill a short vacancy"],
-            ["30 days", "£59", "£1.97/day", "Most popular"],
-            ["90 days", "£149", "£1.66/day", "Best value"],
-          ].map(([label, price, rate, note], index) => (
-            <div key={label} className={index === 1 ? "relative rounded-[12px] border-2 border-pine bg-pine-light/40 p-5" : "rounded-[12px] border border-line p-5"}>
-              {index === 1 && <span className="absolute -top-3 right-3 rounded-pill bg-pine px-2.5 py-1 text-[11px] font-semibold text-white">Popular</span>}
-              <p className="text-[15px] font-medium">{label}</p>
-              <p className="mt-2 font-display text-[30px] leading-none">{price}</p>
-              <p className="mt-2 text-[13px] text-ink-faint">{rate}</p>
-              <p className="mt-3 text-[14px] text-ink-soft">{note}</p>
-            </div>
-          ))}
-          </div>
-          <div className="mt-5 flex flex-wrap items-center justify-between gap-4 border-t border-line pt-5">
-            <p className="max-w-[60ch] text-[13px] text-ink-faint">{livePayments ? "Payment is taken securely through Stripe Checkout." : "Online payments are being configured."} Select the advert first, then choose its duration.</p>
-            <Link href={provider ? "/provider/adverts" : "/register?type=PROVIDER"} className="btn-primary">{provider ? "Choose an advert to sponsor" : "Create a provider account"}</Link>
-          </div>
+          <SponsorDurationPicker provider={provider} livePayments={livePayments} />
         </div>
       </section>
     </div>
