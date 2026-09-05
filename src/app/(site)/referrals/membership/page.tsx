@@ -34,7 +34,7 @@ export default async function ReferrerMembershipPage({
       title="Membership"
       subtitle={
         billingLive
-          ? "Upgrade securely with Stripe. You can manage payment details and cancellation here."
+          ? "Referral-agency membership is billed securely through Stripe. Manage payment details, invoices and cancellation here."
           : "Payments will be available after Stripe is configured."
       }
       nav={nav}
@@ -67,9 +67,9 @@ export default async function ReferrerMembershipPage({
       <section className="mt-8">
         <h2 className="text-[20px]">Why pay for a referrer plan?</h2>
         <p className="mt-2 max-w-[70ch] text-[15px] leading-relaxed text-ink-soft">
-          Free covers a small caseload. Pro is for anyone using SupportRooms as a real referral
-          stream — a full caseworker book, and no limit on how many providers you loop in on a
-          single client while you're placing them.
+          Free covers up to five active clients so an agency can trial the workflow. Pro costs £19
+          per referrer account each month and is for day-to-day referral work: an unlimited caseload,
+          unlimited provider sharing and priority routing.
         </p>
       </section>
 

@@ -189,7 +189,7 @@ async function main() {
         maxClients: -1,
         maxSharesPerClient: -1,
         priorityRouting: true,
-        description: "For a full caseload — unlimited clients, and share a profile with as many providers as you're approaching at once. Placeholder pricing.",
+        description: "For referral agencies and professionals managing a full caseload — unlimited clients and provider sharing.",
       },
     }),
   ]);

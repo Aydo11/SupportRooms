@@ -96,6 +96,9 @@ export default async function PricingPage() {
                           : `Share each profile with ${plan.maxSharesPerClient} provider${plan.maxSharesPerClient === 1 ? "" : "s"} at once`}
                       </Feature>
                       <Feature enabled={plan.priorityRouting}>Priority routing badge on referrals</Feature>
+                      <Feature>Secure subscription checkout</Feature>
+                      <Feature>Payment history and invoices</Feature>
+                      <Feature>Manage payment details and cancellation</Feature>
                     </ul>
 
                     <Link
@@ -109,7 +112,13 @@ export default async function PricingPage() {
               </div>
 
               <div className="mt-6 rounded-card border border-line bg-white p-6">
-                <h2 className="text-[18px]">Using SupportRooms as a referral stream</h2>
+                <div className="flex flex-wrap items-start justify-between gap-4">
+                  <div>
+                    <p className="text-[12px] font-semibold uppercase tracking-[0.08em] text-pine-dark">Referral agency membership</p>
+                    <h2 className="mt-1 text-[20px]">A simple launch price for professional teams</h2>
+                  </div>
+                  <span className="rounded-pill bg-pine-light px-3 py-1.5 text-[13px] font-medium text-pine-dark">£19 per referrer account / month</span>
+                </div>
                 <p className="mt-2 max-w-[68ch] text-[15px] leading-relaxed text-ink-soft">
                   Save the people you support once as clients, then refer them to a live advert or
                   share their profile with any provider — no re-typing the same details into a new
@@ -117,41 +126,53 @@ export default async function PricingPage() {
                   as many providers as you're approaching at once, which matters when you're placing
                   someone urgently.
                 </p>
+                <p className="mt-3 text-[13px] text-ink-faint">People seeking accommodation never pay. Each professional referrer account manages its own caseload and billing.</p>
               </div>
             </div>
           }
         />
       </div>
 
-      <section id="sponsored" className="card mt-10 p-6">
-        <h2 className="text-[20px]">Sponsored adverts</h2>
-        <p className="mt-2 max-w-[70ch] text-[15px] leading-relaxed text-ink-soft">
-          Providers can pay to sponsor an advert. Sponsored adverts fill up to three labelled slots
-          at the top of the first page of a matching search, and get a highlighted pin on the map.
-        </p>
-        <ul className="mt-4 grid gap-2 text-[15px] text-ink-soft sm:grid-cols-2">
-          <li>They only ever appear on the first page — never on page two onwards.</li>
-          <li>They still have to match your filters. Sponsoring can&apos;t force an advert in front of you if it doesn&apos;t fit what you asked for.</li>
-          <li>They&apos;re labelled &ldquo;Sponsored&rdquo; everywhere they appear, including on the map.</li>
-          <li>Paying changes nothing about verification, moderation, or organic ranking.</li>
-        </ul>
-        <div className="mt-5 grid gap-3 sm:grid-cols-3">
+      <section id="sponsored" className="mt-12 overflow-hidden rounded-card border border-line bg-white shadow-[0_1px_2px_rgba(21,42,58,.03)]">
+        <div className="grid gap-6 border-b border-line bg-paper-sunk/60 p-6 lg:grid-cols-[1.1fr_.9fr] lg:p-8">
+          <div>
+            <span className="chip border-clay/30 bg-clay-light text-clay-dark">Optional paid promotion</span>
+            <h2 className="mt-3 text-[26px]">Sponsored adverts</h2>
+            <p className="mt-2 max-w-[62ch] text-[15px] leading-relaxed text-ink-soft">
+              Put a live vacancy in up to three clearly labelled positions at the top of relevant first-page searches, with a highlighted map pin.
+            </p>
+          </div>
+          <ul className="grid content-start gap-2 text-[14px] text-ink-soft sm:grid-cols-2 lg:grid-cols-1">
+            <Feature>Only shown when the advert matches the person&apos;s filters</Feature>
+            <Feature>Always labelled Sponsored, including on the map</Feature>
+            <Feature>Does not affect verification, moderation or organic ranking</Feature>
+          </ul>
+        </div>
+        <div className="p-6 lg:p-8">
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <div><p className="text-[12px] font-semibold uppercase tracking-[0.08em] text-ink-faint">Choose a duration</p><h3 className="mt-1 text-[20px]">One-off payment, no subscription</h3></div>
+            <p className="text-[13px] text-ink-faint">Longer packages receive the higher sponsored position.</p>
+          </div>
+          <div className="mt-5 grid gap-3 sm:grid-cols-3">
           {[
-            ["7 days", "£19", "A short push while a room is empty."],
-            ["30 days", "£59", "The usual choice."],
-            ["90 days", "£149", "Top of the sponsored slots all quarter."],
-          ].map(([label, price, note]) => (
-            <div key={label} className="rounded-[10px] border border-line p-4">
+            ["7 days", "£19", "£2.71/day", "Fill a short vacancy"],
+            ["30 days", "£59", "£1.97/day", "Most popular"],
+            ["90 days", "£149", "£1.66/day", "Best value"],
+          ].map(([label, price, rate, note], index) => (
+            <div key={label} className={index === 1 ? "relative rounded-[12px] border-2 border-pine bg-pine-light/40 p-5" : "rounded-[12px] border border-line p-5"}>
+              {index === 1 && <span className="absolute -top-3 right-3 rounded-pill bg-pine px-2.5 py-1 text-[11px] font-semibold text-white">Popular</span>}
               <p className="text-[15px] font-medium">{label}</p>
-              <p className="mt-1 font-display text-[22px] leading-none">{price}</p>
-              <p className="mt-2 text-[13px] text-ink-soft">{note}</p>
+              <p className="mt-2 font-display text-[30px] leading-none">{price}</p>
+              <p className="mt-2 text-[13px] text-ink-faint">{rate}</p>
+              <p className="mt-3 text-[14px] text-ink-soft">{note}</p>
             </div>
           ))}
+          </div>
+          <div className="mt-5 flex flex-wrap items-center justify-between gap-4 border-t border-line pt-5">
+            <p className="max-w-[60ch] text-[13px] text-ink-faint">{livePayments ? "Payment is taken securely through Stripe Checkout." : "Online payments are being configured."} Select the advert first, then choose its duration.</p>
+            <Link href={provider ? "/provider/adverts" : "/register?type=PROVIDER"} className="btn-primary">{provider ? "Choose an advert to sponsor" : "Create a provider account"}</Link>
+          </div>
         </div>
-        <p className="mt-4 text-[13px] text-ink-faint">
-          {livePayments ? "Payment is taken securely through Stripe Checkout." : "Online payments are being configured."} Longer packages sit above shorter ones
-          in the sponsored slots.
-        </p>
       </section>
     </div>
   );

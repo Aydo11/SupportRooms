@@ -19,18 +19,18 @@ export function PricingTabs({
 
   return (
     <div>
-      <div className="relative inline-flex rounded-pill border border-line bg-white p-1">
+      <div className="relative grid w-full max-w-[430px] grid-cols-2 overflow-hidden rounded-pill border border-line bg-white p-1">
         <span
           className={clsx(
-            "absolute inset-y-1 left-1 w-[calc(50%-4px)] rounded-pill bg-ink transition-transform duration-300 ease-out",
-            tab === "referrer" && "translate-x-[calc(100%+8px)]",
+            "pointer-events-none absolute inset-y-1 left-1 w-[calc(50%-4px)] rounded-pill bg-ink transition-transform duration-300 ease-out",
+            tab === "referrer" && "translate-x-full",
           )}
           aria-hidden="true"
         />
         {(
           [
-            ["provider", "For providers"],
-            ["referrer", "For professional referrers"],
+            ["provider", "Providers"],
+            ["referrer", "Referral agencies"],
           ] as const
         ).map(([value, label]) => (
           <button
@@ -38,7 +38,7 @@ export function PricingTabs({
             onClick={() => setTab(value)}
             aria-pressed={tab === value}
             className={clsx(
-              "relative z-10 rounded-pill px-4 py-2 text-[14px] font-medium transition-colors duration-200 sm:px-5",
+              "relative z-10 min-w-0 rounded-pill px-3 py-2.5 text-center text-[14px] font-medium transition-colors duration-200 sm:px-5",
               tab === value ? "text-white" : "text-ink-soft hover:text-ink",
             )}
           >

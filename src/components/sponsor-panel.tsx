@@ -39,6 +39,7 @@ export function SponsorPanel({
   const [result, setResult] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const hasCredit = usedSlots < includedSlots;
+  const isActive = featured && (!featuredUntil || new Date(featuredUntil) > new Date());
 
   if (!live) {
     return (
@@ -50,8 +51,9 @@ export function SponsorPanel({
   }
 
   return (
-    <div className="card p-5">
-      {featured ? (
+    <div className="overflow-hidden rounded-card border border-line bg-white">
+      <div className="border-b border-line bg-paper-sunk/60 p-5">
+      {isActive ? (
         <>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
@@ -101,24 +103,32 @@ export function SponsorPanel({
           verified, or how it&apos;s moderated.
         </p>
       )}
+      </div>
 
-      <div className="mt-5 grid gap-3 sm:grid-cols-3">
+      <div className="p-5">
+      <fieldset>
+        <legend className="text-[15px] font-medium text-ink">Choose how long to sponsor this advert</legend>
+      <div className="mt-3 grid gap-3 sm:grid-cols-3">
         {PACKAGES.map((option) => (
           <button
+            type="button"
             key={option.key}
             onClick={() => setChoice(option.key)}
             aria-pressed={choice === option.key}
             className={clsx(
-              "rounded-[10px] border p-4 text-left",
-              choice === option.key ? "border-pine bg-pine-light" : "border-line bg-white hover:border-line-strong",
+              "relative rounded-[12px] border p-4 text-left transition-[border-color,background-color,box-shadow,transform] duration-200 hover:-translate-y-0.5",
+              choice === option.key ? "border-pine bg-pine-light shadow-raise" : "border-line bg-white hover:border-line-strong",
             )}
           >
+            <span className={clsx("absolute right-3 top-3 grid h-5 w-5 place-items-center rounded-full border", choice === option.key ? "border-pine bg-pine text-white" : "border-line-strong")} aria-hidden="true">{choice === option.key ? "✓" : ""}</span>
             <span className="block text-[15px] font-medium">{option.label}</span>
-            <span className="mt-1 block text-[18px]">{hasCredit ? "Included" : money(option.price)}</span>
-            <span className="mt-1 block text-[13px] text-ink-soft">{option.note}</span>
+            <span className="mt-2 block font-display text-[25px] leading-none">{hasCredit ? "Included" : money(option.price)}</span>
+            {!hasCredit && <span className="mt-1 block text-[12px] text-ink-faint">{money(Math.round(option.price / (option.key === "WEEK" ? 7 : option.key === "MONTH" ? 30 : 90)))}/day</span>}
+            <span className="mt-3 block text-[13px] leading-relaxed text-ink-soft">{option.note}</span>
           </button>
         ))}
       </div>
+      </fieldset>
 
       {hasCredit && (
         <p className="mt-3 text-[14px] text-pine-dark">
@@ -127,8 +137,10 @@ export function SponsorPanel({
         </p>
       )}
 
+      <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-5">
+      <p className="max-w-md text-[13px] text-ink-faint">One-off payment. Sponsorship ends automatically; this does not start another subscription.</p>
       <button
-        className="btn-primary mt-4"
+        className="btn-primary"
         disabled={pending || (!hasCredit && !paymentsEnabled)}
         onClick={() =>
           startTransition(async () => {
@@ -138,10 +150,12 @@ export function SponsorPanel({
           })
         }
       >
-        {pending ? "Setting up…" : !hasCredit && !paymentsEnabled ? "Payments unavailable" : featured ? "Extend sponsorship" : "Sponsor this advert"}
+        {pending ? "Setting up…" : !hasCredit && !paymentsEnabled ? "Payments unavailable" : isActive ? "Extend sponsorship" : "Continue to payment"}
       </button>
+      </div>
 
       {result && <p className="mt-3 text-[14px] text-ink-soft">{result}</p>}
+      </div>
     </div>
   );
 }
