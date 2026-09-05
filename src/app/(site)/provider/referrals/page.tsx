@@ -5,6 +5,7 @@ import { DashboardShell } from "@/components/dashboard-shell";
 import { EmptyState } from "@/components/ui";
 import { PipelineTrail } from "@/components/pipeline";
 import { StatusUpdater } from "@/components/status-updater";
+import { DirectMessageForm } from "@/components/direct-message-form";
 import { providerNav } from "../nav";
 import { PIPELINE, PIPELINE_LABELS, URGENCY_LABELS } from "@/lib/taxonomy";
 import { ageFrom, shortDate } from "@/lib/format";
@@ -123,6 +124,16 @@ export default async function ProviderReferralsPage() {
                     value,
                     label: PIPELINE_LABELS[value],
                   }))}
+                />
+              </div>
+
+              <div className="mt-3">
+                <DirectMessageForm
+                  recipientUserId={referral.referrerId}
+                  subject={`Referral ${referral.reference}`}
+                  label="Message referrer"
+                  placeholder={`Hi ${referral.referrer.firstName} — about ${referral.applicantFirstName}'s referral (${referral.reference})…`}
+                  compact
                 />
               </div>
             </li>
