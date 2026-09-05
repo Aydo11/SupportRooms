@@ -22,6 +22,7 @@ export async function createReferralAction(_prev: FormState, formData: FormData)
 
   const parsed = referralSchema.safeParse({
     listingId: text(formData, "listingId"),
+    clientId: text(formData, "clientId"),
     applicantFirstName: text(formData, "applicantFirstName"),
     applicantLastName: text(formData, "applicantLastName"),
     applicantDob: text(formData, "applicantDob"),
@@ -40,6 +41,16 @@ export async function createReferralAction(_prev: FormState, formData: FormData)
   if (!parsed.success) return { ok: false, errors: fieldErrors(parsed.error) };
   const d = parsed.data;
 
+  // A referral made from a saved client stays linked to it (for the
+  // referrer's own history) but the client must actually belong to this
+  // referrer — never trust a clientId blindly from the form.
+  let clientId: string | null = null;
+  if (d.clientId) {
+    const client = await db.client.findFirst({ where: { id: d.clientId, referrerId: user.id }, select: { id: true } });
+    if (!client) return { ok: false, errors: { form: "That client record could not be found." } };
+    clientId = client.id;
+  }
+
   let listingCompanyId: string | null = null;
   if (d.listingId) {
     const listing = await db.listing.findUnique({
@@ -56,6 +67,7 @@ export async function createReferralAction(_prev: FormState, formData: FormData)
     data: {
       reference: reference("REF"),
       listingId: d.listingId || null,
+      clientId,
       referrerId: user.id,
       applicantFirstName: d.applicantFirstName,
       applicantLastName: d.applicantLastName,

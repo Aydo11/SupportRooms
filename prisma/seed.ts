@@ -107,10 +107,11 @@ async function main() {
   });
 
   // ------------------------------------------------------------ memberships
-  const [free, professional, business] = await Promise.all([
+  const [free, professional, business, referrerFree, referrerPro] = await Promise.all([
     db.membership.create({
       data: {
         tier: "FREE",
+        audience: "PROVIDER",
         name: "Free",
         priceMonthly: 0,
         maxListings: 2,
@@ -124,6 +125,7 @@ async function main() {
     db.membership.create({
       data: {
         tier: "PROFESSIONAL",
+        audience: "PROVIDER",
         name: "Professional",
         priceMonthly: pence(49),
         priceYearly: pence(490),
@@ -141,6 +143,7 @@ async function main() {
     db.membership.create({
       data: {
         tier: "BUSINESS",
+        audience: "PROVIDER",
         name: "Business",
         priceMonthly: pence(149),
         priceYearly: pence(1490),
@@ -155,6 +158,38 @@ async function main() {
         enhancedProfile: true,
         prioritySupport: true,
         description: "Larger portfolios, priority placement and support. Placeholder pricing.",
+      },
+    }),
+    db.membership.create({
+      data: {
+        tier: "REFERRER_FREE",
+        audience: "REFERRER",
+        name: "Free",
+        priceMonthly: 0,
+        // Provider-only fields are irrelevant here but not nullable — zero
+        // them out rather than leaving the provider defaults in place.
+        maxListings: 0,
+        maxRooms: 0,
+        maxStaff: 0,
+        maxClients: 5,
+        maxSharesPerClient: 1,
+        description: "Enough for a small caseload — try the whole flow before you commit to anything.",
+      },
+    }),
+    db.membership.create({
+      data: {
+        tier: "REFERRER_PRO",
+        audience: "REFERRER",
+        name: "Pro",
+        priceMonthly: pence(19),
+        priceYearly: pence(190),
+        maxListings: 0,
+        maxRooms: 0,
+        maxStaff: 0,
+        maxClients: -1,
+        maxSharesPerClient: -1,
+        priorityRouting: true,
+        description: "For a full caseload — unlimited clients, and share a profile with as many providers as you're approaching at once. Placeholder pricing.",
       },
     }),
   ]);
@@ -420,6 +455,83 @@ async function main() {
     }
 
     companies.push({ company, staffUser, meta: item });
+  }
+
+  // ------------------------------------------------------------ referrer plans and clients
+  await db.referrerSubscription.create({
+    data: {
+      userId: referrer.id,
+      membershipId: referrerPro.id,
+      status: "ACTIVE",
+      currentPeriodEnd: day(23),
+      billingProvider: "mock",
+    },
+  });
+
+  const clientTyler = await db.client.create({
+    data: {
+      referrerId: referrer.id,
+      firstName: "Tyler",
+      lastName: "Brennan",
+      dateOfBirth: years(19),
+      phone: "07700 900142",
+      preferredLocation: "South Birmingham",
+      accommodationNeeds: "Single room in a supported house. Needs to be near the Number 50 bus route.",
+      supportNeeds:
+        "Tyler is 19 and has been in a placement that's ending. He needs support with budgeting, cooking and keeping appointments. No current risk concerns; he is engaging well with college.",
+      supportTypes: ["care-leavers", "young-people"],
+      riskNotes: "No known risks. Placement ends in three weeks, so timing matters.",
+      status: "ACTIVE",
+    },
+  });
+
+  const clientPriya = await db.client.create({
+    data: {
+      referrerId: referrer.id,
+      firstName: "Priya",
+      lastName: "Chowdhury",
+      dateOfBirth: years(29),
+      phone: "07700 900311",
+      preferredLocation: "Birmingham",
+      accommodationNeeds: "Self-contained flat, ground floor if possible.",
+      supportNeeds: "Recovering from a period of poor mental health, now stable. Wants light-touch visiting support.",
+      supportTypes: ["mental-health"],
+      status: "ACTIVE",
+    },
+  });
+
+  await db.client.create({
+    data: {
+      referrerId: referrer.id,
+      firstName: "Owen",
+      lastName: "Blackwood",
+      dateOfBirth: years(34),
+      preferredLocation: "Birmingham",
+      accommodationNeeds: "Moved into a private tenancy in the spring.",
+      supportNeeds: "Case closed — no ongoing support needed.",
+      supportTypes: ["homelessness"],
+      status: "PLACED",
+    },
+  });
+
+  await db.clientShare.create({
+    data: {
+      clientId: clientTyler.id,
+      companyId: companies[0].company.id,
+      sharedById: referrer.id,
+      note: "Flagging Tyler in case anything suitable comes up in the next few weeks — his placement ends soon.",
+    },
+  });
+
+  if (companies[1]) {
+    await db.clientShare.create({
+      data: {
+        clientId: clientPriya.id,
+        companyId: companies[1].company.id,
+        sharedById: referrer.id,
+        note: "Priya is ready to move as soon as something suitable is free.",
+      },
+    });
   }
 
   // ------------------------------------------------------------ adverts
@@ -1107,7 +1219,8 @@ Seed complete.
   Seekers     jordan@example.test, amara@example.test, kieran@example.test, priya@example.test
   Providers   dan@ashfieldsupported.test, hafsa@northgatetrust.test,
               marcus@beaconrecovery.test, nadia@harboursideliving.test
-  Referrers   referrer@example.test, housingoptions@example.test
+  Referrers   referrer@example.test (Pro plan, 3 clients, 2 shared profiles),
+              housingoptions@example.test (Free plan)
 
   ${created.length} adverts, ${lookingForAds.length} looking-for adverts, 3 requests, 2 referrals.
 `);

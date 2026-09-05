@@ -8,14 +8,27 @@ export function SubmitButton({
   children,
   pendingLabel,
   className = "btn-primary",
+  disabled = false,
 }: {
   children: React.ReactNode;
   pendingLabel?: string;
   className?: string;
+  disabled?: boolean;
 }) {
   const { pending } = useFormStatus();
   return (
-    <button type="submit" className={className} disabled={pending} aria-busy={pending}>
+    <button type="submit" className={className} disabled={pending || disabled} aria-busy={pending}>
+      {pending && (
+        <svg
+          className="h-4 w-4 animate-spin"
+          viewBox="0 0 24 24"
+          fill="none"
+          aria-hidden="true"
+        >
+          <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2.5" opacity="0.25" />
+          <path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+        </svg>
+      )}
       {pending ? (pendingLabel ?? "Working…") : children}
     </button>
   );
@@ -56,7 +69,11 @@ export function Field({
 export function FormError({ message }: { message?: string }) {
   if (!message) return null;
   return (
-    <div className="rounded-[10px] border border-clay/30 bg-clay-light px-4 py-3 text-[14px] text-clay" role="alert">
+    <div
+      key={message}
+      className="animate-fade-in-down rounded-[10px] border border-clay/30 bg-clay-light px-4 py-3 text-[14px] text-clay"
+      role="alert"
+    >
       {message}
     </div>
   );
@@ -65,7 +82,14 @@ export function FormError({ message }: { message?: string }) {
 export function FormSuccess({ message }: { message?: string }) {
   if (!message) return null;
   return (
-    <div className="rounded-[10px] border border-pine/25 bg-pine-light px-4 py-3 text-[14px] text-pine-dark" role="status">
+    <div
+      key={message}
+      className="animate-fade-in-down flex items-center gap-2 rounded-[10px] border border-pine/25 bg-pine-light px-4 py-3 text-[14px] text-pine-dark"
+      role="status"
+    >
+      <svg viewBox="0 0 16 16" className="h-4 w-4 shrink-0" fill="currentColor" aria-hidden="true">
+        <path d="M6.2 11.6 2.6 8l1-1 2.6 2.6L12.4 3.4l1 1-7.2 7.2Z" />
+      </svg>
       {message}
     </div>
   );

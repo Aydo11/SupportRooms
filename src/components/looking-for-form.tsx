@@ -1,7 +1,7 @@
 "use client";
+import { useActionState } from "react";
 
 import Link from "next/link";
-import { useFormState } from "react-dom";
 import { saveLookingForAction } from "@/server/actions/lookingFor";
 import { CheckGroup, Field, FormError, SubmitButton } from "./ui";
 import { ACCOMMODATION_TYPES, GENDER_ARRANGEMENTS, SUPPORT_TYPES } from "@/lib/taxonomy";
@@ -25,7 +25,7 @@ type Ad = {
 };
 
 export function LookingForForm({ ad, discoverable }: { ad: Ad | null; discoverable: boolean }) {
-  const [state, action] = useFormState(saveLookingForAction, { ok: false });
+  const [state, action] = useActionState(saveLookingForAction, { ok: false });
 
   return (
     <form action={action} className="space-y-8">

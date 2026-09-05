@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { requireUser } from "@/lib/rbac";
 import { Thread } from "@/components/thread";
+import { ConversationMenu } from "@/components/conversation-menu";
 
 export const metadata = { title: "Conversation" };
 export const dynamic = "force-dynamic";
@@ -37,6 +38,13 @@ export default async function ConversationPage({ params }: { params: Promise<{ i
   });
 
   const others = conversation.participants.filter((p) => p.userId !== user.id);
+  const alreadyBlocked = others[0]
+    ? Boolean(
+        await db.block.findUnique({
+          where: { blockerId_blockedId: { blockerId: user.id, blockedId: others[0].userId } },
+        }),
+      )
+    : false;
 
   return (
     <div className="shell max-w-3xl py-6 lg:py-10">
@@ -59,12 +67,11 @@ export default async function ConversationPage({ params }: { params: Promise<{ i
           )}
         </div>
         {others[0] && (
-          <Link
-            href={`/report?targetType=USER&targetId=${others[0].userId}`}
-            className="text-[13px] text-ink-faint underline hover:text-ink"
-          >
-            Block or report
-          </Link>
+          <ConversationMenu
+            otherUserId={others[0].userId}
+            otherName={others[0].user.firstName}
+            initiallyBlocked={alreadyBlocked}
+          />
         )}
       </header>
 

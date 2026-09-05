@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Instrument_Sans, Newsreader } from "next/font/google";
 import { brand } from "@/brand.config";
+import { Toaster } from "@/components/toast";
 import "./globals.css";
 
 const sans = Instrument_Sans({
@@ -38,6 +39,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           Skip to content
         </a>
         {children}
+        <Toaster />
       </body>
     </html>
   );

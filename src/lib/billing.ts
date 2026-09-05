@@ -19,12 +19,25 @@ export type SponsorCheckoutRequest = {
 };
 export type CheckoutSession = { url: string; externalId: string | null; provider: string };
 
+export type ReferrerCheckoutRequest = {
+  userId: string;
+  tier: MembershipTier;
+  successUrl: string;
+  cancelUrl: string;
+};
+
 interface BillingDriver {
   readonly name: string;
   startCheckout(req: CheckoutRequest): Promise<CheckoutSession>;
   startSponsorCheckout(req: SponsorCheckoutRequest): Promise<CheckoutSession>;
   cancel(companyId: string, atPeriodEnd: boolean): Promise<void>;
   billingPortalUrl(companyId: string, returnUrl: string): Promise<string | null>;
+  /** The referrer-plan twin of startCheckout/cancel — a subscription against a
+   * User rather than a Company. Mirrors the company path exactly so the mock
+   * and Stripe drivers stay symmetrical. */
+  startReferrerCheckout(req: ReferrerCheckoutRequest): Promise<CheckoutSession>;
+  cancelReferrer(userId: string, atPeriodEnd: boolean): Promise<void>;
+  referrerBillingPortalUrl(userId: string, returnUrl: string): Promise<string | null>;
 }
 
 const mockDriver: BillingDriver = {
@@ -41,6 +54,14 @@ const mockDriver: BillingDriver = {
     await db.subscription.update({ where: { companyId }, data: atPeriodEnd ? { cancelAtPeriodEnd: true } : { status: "CANCELLED", cancelAtPeriodEnd: true } });
   },
   async billingPortalUrl() { return null; },
+  async startReferrerCheckout({ userId, tier, successUrl }) {
+    await applyReferrerSubscriptionChange({ userId, tier, provider: "mock", status: "ACTIVE" });
+    return { url: `${successUrl}?billing=complete`, externalId: null, provider: "mock" };
+  },
+  async cancelReferrer(userId, atPeriodEnd) {
+    await db.referrerSubscription.update({ where: { userId }, data: atPeriodEnd ? { cancelAtPeriodEnd: true } : { status: "CANCELLED", cancelAtPeriodEnd: true } });
+  },
+  async referrerBillingPortalUrl() { return null; },
 };
 
 const disabledDriver: BillingDriver = {
@@ -49,6 +70,9 @@ const disabledDriver: BillingDriver = {
   async startSponsorCheckout() { throw new Error("Payments are not configured yet."); },
   async cancel() { throw new Error("Payments are not configured yet."); },
   async billingPortalUrl() { return null; },
+  async startReferrerCheckout() { throw new Error("Payments are not configured yet."); },
+  async cancelReferrer() { throw new Error("Payments are not configured yet."); },
+  async referrerBillingPortalUrl() { return null; },
 };
 
 let stripeClient: Stripe | null = null;
@@ -65,6 +89,15 @@ async function stripeCustomer(companyId: string) {
   const company = await db.company.findUniqueOrThrow({ where: { id: companyId }, select: { name: true, email: true } });
   const customer = await stripe().customers.create({ name: company.name, email: company.email, metadata: { companyId } });
   await db.subscription.updateMany({ where: { companyId }, data: { externalCustomerId: customer.id, billingProvider: "stripe" } });
+  return customer.id;
+}
+
+async function stripeReferrerCustomer(userId: string) {
+  const subscription = await db.referrerSubscription.findUnique({ where: { userId }, select: { externalCustomerId: true } });
+  if (subscription?.externalCustomerId) return subscription.externalCustomerId;
+  const user = await db.user.findUniqueOrThrow({ where: { id: userId }, select: { firstName: true, lastName: true, email: true } });
+  const customer = await stripe().customers.create({ name: `${user.firstName} ${user.lastName}`, email: user.email, metadata: { userId } });
+  await db.referrerSubscription.updateMany({ where: { userId }, data: { externalCustomerId: customer.id, billingProvider: "stripe" } });
   return customer.id;
 }
 
@@ -124,6 +157,36 @@ const stripeDriver: BillingDriver = {
     const session = await stripe().billingPortal.sessions.create({ customer, return_url: returnUrl });
     return session.url;
   },
+  async startReferrerCheckout({ userId, tier, successUrl, cancelUrl }) {
+    const price = referrerPriceIdFor(tier);
+    if (!price) throw new Error(`A Stripe price has not been configured for ${tier.toLowerCase()}.`);
+    const customer = await stripeReferrerCustomer(userId);
+    const session = await stripe().checkout.sessions.create({
+      mode: "subscription",
+      customer,
+      line_items: [{ price, quantity: 1 }],
+      success_url: `${successUrl}${successUrl.includes("?") ? "&" : "?"}billing=complete&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${cancelUrl}${cancelUrl.includes("?") ? "&" : "?"}billing=cancelled`,
+      allow_promotion_codes: true,
+      client_reference_id: userId,
+      metadata: { kind: "referrer_membership", userId, tier },
+      subscription_data: { metadata: { kind: "referrer_membership", userId, tier } },
+    });
+    if (!session.url) throw new Error("Stripe did not return a checkout page.");
+    return { url: session.url, externalId: session.id, provider: "stripe" };
+  },
+  async cancelReferrer(userId, atPeriodEnd) {
+    const subscription = await db.referrerSubscription.findUnique({ where: { userId }, select: { externalSubscriptionId: true } });
+    if (!subscription?.externalSubscriptionId) throw new Error("No Stripe subscription was found.");
+    if (atPeriodEnd) await stripe().subscriptions.update(subscription.externalSubscriptionId, { cancel_at_period_end: true });
+    else await stripe().subscriptions.cancel(subscription.externalSubscriptionId);
+    await db.referrerSubscription.update({ where: { userId }, data: { cancelAtPeriodEnd: atPeriodEnd, ...(!atPeriodEnd ? { status: "CANCELLED" as const } : {}) } });
+  },
+  async referrerBillingPortalUrl(userId, returnUrl) {
+    const customer = await stripeReferrerCustomer(userId);
+    const session = await stripe().billingPortal.sessions.create({ customer, return_url: returnUrl });
+    return session.url;
+  },
 };
 
 const mockAllowed = process.env.NODE_ENV !== "production" || process.env.ALLOW_MOCK_BILLING === "true";
@@ -132,7 +195,11 @@ export const billingIsLive = () => process.env.BILLING_DRIVER === "stripe" && Bo
 export const billingAvailable = () => billingIsLive() || mockAllowed;
 
 export function priceIdFor(tier: MembershipTier) {
-  return { FREE: null, PROFESSIONAL: process.env.STRIPE_PRICE_PROFESSIONAL ?? null, BUSINESS: process.env.STRIPE_PRICE_BUSINESS ?? null }[tier];
+  return { FREE: null, PROFESSIONAL: process.env.STRIPE_PRICE_PROFESSIONAL ?? null, BUSINESS: process.env.STRIPE_PRICE_BUSINESS ?? null, REFERRER_FREE: null, REFERRER_PRO: null }[tier];
+}
+
+export function referrerPriceIdFor(tier: MembershipTier) {
+  return { REFERRER_FREE: null, REFERRER_PRO: process.env.STRIPE_PRICE_REFERRER_PRO ?? null, FREE: null, PROFESSIONAL: null, BUSINESS: null }[tier];
 }
 
 export async function applySubscriptionChange(params: {
@@ -198,4 +265,50 @@ export async function planLimits(companyId: string) {
   ]);
   const under = (used: number, max: number) => max === -1 || used < max;
   return { membership, subscription, used: { listings, rooms, staff }, canAddListing: under(listings, membership.maxListings), canAddRoom: under(rooms, membership.maxRooms), canAddStaff: under(staff, membership.maxStaff) };
+}
+
+export async function applyReferrerSubscriptionChange(params: {
+  userId: string;
+  tier: MembershipTier;
+  provider: string;
+  status?: SubscriptionStatus;
+  externalCustomerId?: string;
+  externalSubscriptionId?: string;
+  periodEnd?: Date;
+  cancelAtPeriodEnd?: boolean;
+}) {
+  const membership = await db.membership.findUnique({ where: { tier: params.tier } });
+  if (!membership) throw new Error(`Unknown membership tier ${params.tier}`);
+  return db.referrerSubscription.upsert({
+    where: { userId: params.userId },
+    create: {
+      userId: params.userId, membershipId: membership.id, status: params.status ?? "ACTIVE",
+      billingProvider: params.provider, externalCustomerId: params.externalCustomerId,
+      externalSubscriptionId: params.externalSubscriptionId, currentPeriodEnd: params.periodEnd,
+      cancelAtPeriodEnd: params.cancelAtPeriodEnd ?? false,
+    },
+    update: {
+      membershipId: membership.id, status: params.status ?? "ACTIVE", billingProvider: params.provider,
+      ...(params.externalCustomerId ? { externalCustomerId: params.externalCustomerId } : {}),
+      ...(params.externalSubscriptionId ? { externalSubscriptionId: params.externalSubscriptionId } : {}),
+      ...(params.periodEnd ? { currentPeriodEnd: params.periodEnd } : {}),
+      cancelAtPeriodEnd: params.cancelAtPeriodEnd ?? false,
+    },
+  });
+}
+
+/**
+ * A referrer's plan gates two things: how many active clients they can hold at
+ * once, and (inside shareClientAction) how many providers one client's
+ * profile can be shared with simultaneously. Both default to unlimited on the
+ * catalogue's REFERRER_FREE row unless you tighten it in the seed.
+ */
+export async function referrerPlanLimits(userId: string) {
+  const subscription = await db.referrerSubscription.findUnique({ where: { userId }, include: { membership: true } });
+  const entitled = subscription && ["ACTIVE", "TRIALING", "PAST_DUE"].includes(subscription.status);
+  const membership = (entitled ? subscription.membership : null) ?? (await db.membership.findUnique({ where: { tier: "REFERRER_FREE" } }));
+  if (!membership) throw new Error("Referrer membership catalogue is empty. Run npm run db:seed.");
+  const clients = await db.client.count({ where: { referrerId: userId, status: { not: "ARCHIVED" } } });
+  const canAddClient = membership.maxClients === -1 || clients < membership.maxClients;
+  return { membership, subscription, used: { clients }, canAddClient };
 }

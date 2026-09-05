@@ -102,3 +102,22 @@ export async function assertRequestAccess(user: CurrentUser, requestId: string) 
   }
   return request;
 }
+
+/**
+ * A client record is visible to: the referrer who owns it, staff at any
+ * company it has been actively shared with (a revoked share loses access
+ * immediately), and admins.
+ */
+export async function assertClientAccess(user: CurrentUser, clientId: string) {
+  const client = await db.client.findUnique({
+    where: { id: clientId },
+    include: { shares: { where: { revokedAt: null }, select: { companyId: true } } },
+  });
+  if (!client) throw new AuthorisationError("Client not found.");
+  const isOwner = client.referrerId === user.id;
+  const isSharedWith = client.shares.some((share) => canActForCompany(user, share.companyId));
+  if (!isOwner && !isSharedWith && user.role !== "ADMIN") {
+    throw new AuthorisationError("Client not found.");
+  }
+  return client;
+}

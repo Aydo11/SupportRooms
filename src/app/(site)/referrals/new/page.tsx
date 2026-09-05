@@ -10,11 +10,15 @@ export const dynamic = "force-dynamic";
 export default async function NewReferralPage({
   searchParams,
 }: {
-  searchParams: Promise<{ listingId?: string }>;
+  searchParams: Promise<{ listingId?: string; clientId?: string }>;
 }) {
   const query = await searchParams;
   const user = await requireReferrer();
   const nav = await referrerNav(user.id);
+
+  const client = query.clientId
+    ? await db.client.findFirst({ where: { id: query.clientId, referrerId: user.id } })
+    : null;
 
   const listing = query.listingId
     ? await db.listing.findFirst({
@@ -60,8 +64,18 @@ export default async function NewReferralPage({
 
       <ReferralForm
         listingId={listing?.id}
+        clientId={client?.id}
         defaults={{
           organisation: user.staffOf[0]?.company?.name ?? "",
+          applicantFirstName: client?.firstName,
+          applicantLastName: client?.lastName,
+          applicantDob: client?.dateOfBirth?.toISOString().slice(0, 10),
+          applicantPhone: client?.phone ?? undefined,
+          applicantEmail: client?.email ?? undefined,
+          preferredLocation: client?.preferredLocation ?? undefined,
+          accommodationNeeds: client?.accommodationNeeds ?? undefined,
+          supportNeeds: client?.supportNeeds ?? undefined,
+          supportTypes: client?.supportTypes,
         }}
       />
     </DashboardShell>

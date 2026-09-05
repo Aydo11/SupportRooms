@@ -1,6 +1,6 @@
 "use client";
+import { useActionState } from "react";
 
-import { useFormState } from "react-dom";
 import { createRequestAction } from "@/server/actions/engagement";
 import { Field, FormError, SubmitButton } from "./ui";
 
@@ -11,7 +11,7 @@ export function RequestForm({
   listingId: string;
   defaults: { accommodationNeeds: string; supportNeeds: string; moveInDate: string };
 }) {
-  const [state, action] = useFormState(createRequestAction, { ok: false });
+  const [state, action] = useActionState(createRequestAction, { ok: false });
 
   return (
     <form action={action} className="mt-6 space-y-5">

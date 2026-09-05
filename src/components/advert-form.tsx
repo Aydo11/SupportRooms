@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useFormState } from "react-dom";
+import { useEffect, useState, useActionState } from "react";
 import { saveListingAction } from "@/server/actions/listings";
 import { CheckGroup, Field, FormError, SubmitButton, Toggle } from "./ui";
 import { clsx } from "@/lib/clsx";
@@ -53,7 +52,7 @@ export type AdvertDefaults = Partial<{
 const STEPS = ["Property", "Accommodation", "Support", "Description"];
 
 export function AdvertForm({ defaults = {} }: { defaults?: AdvertDefaults }) {
-  const [state, action] = useFormState(saveListingAction, { ok: false });
+  const [state, action] = useActionState(saveListingAction, { ok: false });
   const [step, setStep] = useState(0);
   const editing = Boolean(defaults.id);
 

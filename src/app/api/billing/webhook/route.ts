@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import type Stripe from "stripe";
-import { activateSponsorship, applySubscriptionChange, stripe } from "@/lib/billing";
+import { activateSponsorship, applyReferrerSubscriptionChange, applySubscriptionChange, stripe } from "@/lib/billing";
 import { db } from "@/lib/db";
-import { notifyCompany } from "@/lib/notify";
+import { notify, notifyCompany } from "@/lib/notify";
 import type { MembershipTier, SubscriptionStatus } from "@prisma/client";
 import type { SponsorPackage } from "@/lib/sponsor-packages";
 
@@ -27,7 +27,10 @@ export async function POST(request: Request) {
       await subscriptionChanged(event.data.object);
     } else if (event.type === "invoice.payment_failed") {
       const customerId = stringId(event.data.object.customer);
-      if (customerId) await db.subscription.updateMany({ where: { externalCustomerId: customerId }, data: { status: "PAST_DUE" } });
+      if (customerId) {
+        await db.subscription.updateMany({ where: { externalCustomerId: customerId }, data: { status: "PAST_DUE" } });
+        await db.referrerSubscription.updateMany({ where: { externalCustomerId: customerId }, data: { status: "PAST_DUE" } });
+      }
     } else if (event.type === "invoice.paid") {
       await invoicePaid(event.data.object);
     }
@@ -41,8 +44,36 @@ export async function POST(request: Request) {
 
 async function checkoutCompleted(session: Stripe.Checkout.Session) {
   const kind = session.metadata?.kind;
+  if (session.payment_status === "unpaid") return;
+
+  if (kind === "referrer_membership") {
+    const userId = session.metadata?.userId ?? session.client_reference_id;
+    const tier = session.metadata?.tier as MembershipTier | undefined;
+    const subscriptionId = stringId(session.subscription);
+    if (!userId || !tier || !subscriptionId) return;
+    const remote = await stripe().subscriptions.retrieve(subscriptionId);
+    await applyReferrerSubscriptionChange({
+      userId,
+      tier,
+      provider: "stripe",
+      status: stripeStatus(remote.status),
+      externalCustomerId: stringId(session.customer) ?? undefined,
+      externalSubscriptionId: remote.id,
+      periodEnd: periodEnd(remote),
+      cancelAtPeriodEnd: remote.cancel_at_period_end,
+    });
+    await notify({
+      userId,
+      type: "MEMBERSHIP",
+      title: "Referrer plan upgraded",
+      body: `Your ${tier.replace("REFERRER_", "").toLowerCase()} plan is now active.`,
+      href: "/referrals/membership",
+    });
+    return;
+  }
+
   const companyId = session.metadata?.companyId ?? session.client_reference_id;
-  if (!companyId || session.payment_status === "unpaid") return;
+  if (!companyId) return;
 
   if (kind === "membership") {
     const tier = session.metadata?.tier as MembershipTier | undefined;
@@ -76,9 +107,29 @@ async function checkoutCompleted(session: Stripe.Checkout.Session) {
 }
 
 async function subscriptionChanged(subscription: Stripe.Subscription) {
-  const companyId = subscription.metadata.companyId;
   const tier = subscription.metadata.tier as MembershipTier | undefined;
-  if (!companyId || !tier) return;
+  if (!tier) return;
+
+  if (subscription.metadata.kind === "referrer_membership") {
+    const userId = subscription.metadata.userId;
+    if (!userId) return;
+    const current = await db.referrerSubscription.findUnique({ where: { userId }, select: { externalSubscriptionId: true } });
+    if (current?.externalSubscriptionId && current.externalSubscriptionId !== subscription.id) return;
+    await applyReferrerSubscriptionChange({
+      userId,
+      tier,
+      provider: "stripe",
+      status: stripeStatus(subscription.status),
+      externalCustomerId: stringId(subscription.customer) ?? undefined,
+      externalSubscriptionId: subscription.id,
+      periodEnd: periodEnd(subscription),
+      cancelAtPeriodEnd: subscription.cancel_at_period_end,
+    });
+    return;
+  }
+
+  const companyId = subscription.metadata.companyId;
+  if (!companyId) return;
   const current = await db.subscription.findUnique({ where: { companyId }, select: { externalSubscriptionId: true } });
   if (current?.externalSubscriptionId && current.externalSubscriptionId !== subscription.id) return;
   await applySubscriptionChange({
@@ -96,13 +147,25 @@ async function subscriptionChanged(subscription: Stripe.Subscription) {
 async function invoicePaid(invoice: Stripe.Invoice) {
   const customerId = stringId(invoice.customer);
   if (!customerId || !invoice.amount_paid) return;
-  const subscription = await db.subscription.findFirst({ where: { externalCustomerId: customerId }, include: { membership: { select: { name: true } } } });
-  if (!subscription) return;
-  await db.payment.upsert({
-    where: { externalPaymentId: `invoice:${invoice.id}` },
-    create: { companyId: subscription.companyId, subscriptionId: subscription.id, kind: "SUBSCRIPTION", amount: invoice.amount_paid, currency: invoice.currency?.toUpperCase() ?? "GBP", status: "PAID", description: `${subscription.membership.name} membership`, externalPaymentId: `invoice:${invoice.id}`, invoiceUrl: invoice.hosted_invoice_url ?? null },
-    update: { status: "PAID", invoiceUrl: invoice.hosted_invoice_url ?? null },
-  });
+
+  const companySub = await db.subscription.findFirst({ where: { externalCustomerId: customerId }, include: { membership: { select: { name: true } } } });
+  if (companySub) {
+    await db.payment.upsert({
+      where: { externalPaymentId: `invoice:${invoice.id}` },
+      create: { companyId: companySub.companyId, subscriptionId: companySub.id, kind: "SUBSCRIPTION", amount: invoice.amount_paid, currency: invoice.currency?.toUpperCase() ?? "GBP", status: "PAID", description: `${companySub.membership.name} membership`, externalPaymentId: `invoice:${invoice.id}`, invoiceUrl: invoice.hosted_invoice_url ?? null },
+      update: { status: "PAID", invoiceUrl: invoice.hosted_invoice_url ?? null },
+    });
+    return;
+  }
+
+  const referrerSub = await db.referrerSubscription.findFirst({ where: { externalCustomerId: customerId }, include: { membership: { select: { name: true } } } });
+  if (referrerSub) {
+    await db.referrerPayment.upsert({
+      where: { externalPaymentId: `invoice:${invoice.id}` },
+      create: { userId: referrerSub.userId, subscriptionId: referrerSub.id, kind: "SUBSCRIPTION", amount: invoice.amount_paid, currency: invoice.currency?.toUpperCase() ?? "GBP", status: "PAID", description: `${referrerSub.membership.name} plan`, externalPaymentId: `invoice:${invoice.id}`, invoiceUrl: invoice.hosted_invoice_url ?? null },
+      update: { status: "PAID", invoiceUrl: invoice.hosted_invoice_url ?? null },
+    });
+  }
 }
 
 function stringId(value: string | { id: string } | null): string | null {

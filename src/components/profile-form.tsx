@@ -1,6 +1,6 @@
 "use client";
+import { useActionState } from "react";
 
-import { useFormState } from "react-dom";
 import { updateProfileAction } from "@/server/actions/profile";
 import { CheckGroup, Field, FormError, FormSuccess, SubmitButton, Toggle } from "./ui";
 import { ACCOMMODATION_TYPES, GENDER_ARRANGEMENTS, SUPPORT_TYPES } from "@/lib/taxonomy";
@@ -30,7 +30,7 @@ export function ProfileForm({
     discoverable: boolean;
   };
 }) {
-  const [state, action] = useFormState(updateProfileAction, { ok: false });
+  const [state, action] = useActionState(updateProfileAction, { ok: false });
 
   return (
     <form action={action} className="space-y-6">

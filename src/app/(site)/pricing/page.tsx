@@ -4,25 +4,35 @@ import { money } from "@/lib/format";
 import { brand } from "@/brand.config";
 import { billingIsLive } from "@/lib/billing";
 import { getCurrentUser } from "@/lib/session";
+import { PricingTabs } from "@/components/pricing-tabs";
 
 export const metadata = { title: "Membership and pricing" };
 export const dynamic = "force-dynamic";
 
 export default async function PricingPage() {
-  const [plans, user] = await Promise.all([db.membership.findMany({ where: { active: true }, orderBy: { priceMonthly: "asc" } }), getCurrentUser()]);
+  const [plans, referrerPlans, user] = await Promise.all([
+    db.membership.findMany({ where: { active: true, audience: "PROVIDER" }, orderBy: { priceMonthly: "asc" } }),
+    db.membership.findMany({ where: { active: true, audience: "REFERRER" }, orderBy: { priceMonthly: "asc" } }),
+    getCurrentUser(),
+  ]);
   const livePayments = billingIsLive();
   const provider = user?.role === "PROVIDER";
+  const referrer = user?.role === "REFERRER";
 
   return (
     <div className="shell py-14">
-      <h1 className="max-w-[18ch] text-[38px] leading-tight">Membership for providers</h1>
+      <h1 className="max-w-[22ch] text-[38px] leading-tight">Membership and pricing</h1>
       <p className="mt-3 max-w-[62ch] text-[17px] leading-relaxed text-ink-soft">
-        People looking for accommodation and professional referrers use {brand.name} free. Providers
-        pay to advertise. {livePayments ? "Payments are handled securely by Stripe." : "Online payments are being configured."}
+        People looking for accommodation always use {brand.name} free. Providers pay to advertise,
+        and professional referrers can upgrade for a bigger caseload and unlimited sharing.{" "}
+        {livePayments ? "Payments are handled securely by Stripe." : "Online payments are being configured."}
       </p>
 
-      <div className="mt-10 grid gap-5 lg:grid-cols-3">
-        {plans.map((plan) => (
+      <div className="mt-8">
+        <PricingTabs
+          providerPanel={
+            <div className="grid gap-5 lg:grid-cols-3">
+              {plans.map((plan) => (
           <div
             key={plan.id}
             className={plan.tier === "PROFESSIONAL" ? "rounded-card border-2 border-pine bg-white p-7" : "card p-7"}
@@ -56,8 +66,61 @@ export default async function PricingPage() {
             >
               {plan.priceMonthly === 0 ? "Start free" : `Choose ${plan.name}`}
             </Link>
-          </div>
-        ))}
+                </div>
+              ))}
+            </div>
+          }
+          referrerPanel={
+            <div>
+              <div className="grid gap-5 lg:grid-cols-2">
+                {referrerPlans.map((plan) => (
+                  <div
+                    key={plan.id}
+                    className={plan.tier === "REFERRER_PRO" ? "rounded-card border-2 border-pine bg-white p-7" : "card p-7"}
+                  >
+                    {plan.tier === "REFERRER_PRO" && (
+                      <span className="chip chip-active mb-3">For a real referral stream</span>
+                    )}
+                    <h2 className="text-[24px]">{plan.name}</h2>
+                    <p className="mt-2 flex items-baseline gap-1.5">
+                      <span className="font-display text-[34px]">{plan.priceMonthly === 0 ? "Free" : money(plan.priceMonthly)}</span>
+                      {plan.priceMonthly > 0 && <span className="text-[15px] text-ink-soft">per month</span>}
+                    </p>
+                    {plan.description && <p className="mt-3 text-[15px] leading-relaxed text-ink-soft">{plan.description}</p>}
+
+                    <ul className="mt-5 space-y-2.5 text-[15px]">
+                      <Feature>{plan.maxClients === -1 ? "Unlimited active clients" : `${plan.maxClients} active client${plan.maxClients === 1 ? "" : "s"}`}</Feature>
+                      <Feature>
+                        {plan.maxSharesPerClient === -1
+                          ? "Share each profile with unlimited providers"
+                          : `Share each profile with ${plan.maxSharesPerClient} provider${plan.maxSharesPerClient === 1 ? "" : "s"} at once`}
+                      </Feature>
+                      <Feature enabled={plan.priorityRouting}>Priority routing badge on referrals</Feature>
+                    </ul>
+
+                    <Link
+                      href={referrer ? "/referrals/membership" : `/register?type=REFERRER&plan=${plan.tier}`}
+                      className={plan.tier === "REFERRER_PRO" ? "btn-primary mt-7 w-full" : "btn-secondary mt-7 w-full"}
+                    >
+                      {plan.priceMonthly === 0 ? "Start free" : `Choose ${plan.name}`}
+                    </Link>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-6 rounded-card border border-line bg-white p-6">
+                <h2 className="text-[18px]">Using SupportRooms as a referral stream</h2>
+                <p className="mt-2 max-w-[68ch] text-[15px] leading-relaxed text-ink-soft">
+                  Save the people you support once as clients, then refer them to a live advert or
+                  share their profile with any provider — no re-typing the same details into a new
+                  form each time. Pro removes the caseload limit and lets you share one profile with
+                  as many providers as you're approaching at once, which matters when you're placing
+                  someone urgently.
+                </p>
+              </div>
+            </div>
+          }
+        />
       </div>
 
       <section id="sponsored" className="card mt-10 p-6">

@@ -10,6 +10,13 @@
 
   html {
     -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
   }
 
   body {
@@ -63,17 +70,17 @@
   }
 
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-[10px] px-4 py-2.5 text-[15px]
+    @apply inline-flex min-h-[42px] items-center justify-center gap-2 rounded-[10px] px-4 py-2.5 text-[15px]
            font-medium transition-[color,background-color,border-color,box-shadow,transform] duration-200
-           disabled:pointer-events-none disabled:opacity-60;
+           disabled:pointer-events-none disabled:opacity-60 active:scale-[0.98];
   }
 
   .btn-primary {
-    @apply btn bg-pine text-white shadow-[0_3px_8px_rgba(31,111,92,.16)] hover:-translate-y-px hover:bg-pine-dark hover:shadow-[0_7px_16px_rgba(31,111,92,.2)] active:translate-y-0;
+    @apply btn bg-pine text-white shadow-[0_3px_8px_rgba(31,111,92,.16)] hover:-translate-y-px hover:bg-pine-dark hover:shadow-[0_7px_16px_rgba(31,111,92,.2)] active:translate-y-0 active:scale-[0.98];
   }
 
   .btn-secondary {
-    @apply btn border border-line-strong bg-white text-ink hover:-translate-y-px hover:bg-paper-sunk hover:shadow-raise active:translate-y-0;
+    @apply btn border border-line-strong bg-white text-ink hover:-translate-y-px hover:bg-paper-sunk hover:shadow-raise active:translate-y-0 active:scale-[0.98];
   }
 
   .btn-ghost {
@@ -107,6 +114,34 @@
 
   .interactive-card {
     @apply transition-[border-color,box-shadow,transform] duration-300 ease-out hover:-translate-y-1 hover:border-line-strong hover:shadow-float;
+  }
+
+  /* A loading placeholder that reads as "still working", not "broken layout". */
+  .skeleton {
+    @apply relative overflow-hidden rounded-[8px] bg-paper-sunk;
+    background-image: linear-gradient(90deg, rgba(21,42,58,0.04) 0%, rgba(21,42,58,0.09) 50%, rgba(21,42,58,0.04) 100%);
+    background-size: 800px 100%;
+    animation: shimmer 1.6s ease-in-out infinite;
+  }
+
+  /* Toast stack, bottom-anchored so it never fights a sticky header. */
+  .toast {
+    @apply pointer-events-auto flex items-start gap-3 rounded-card border border-line bg-white px-4 py-3
+           text-[14px] shadow-float animate-toast-in;
+  }
+
+  /* Underline that grows from the middle rather than snapping in — used for the
+     active tab indicator in dashboard nav and the pricing toggle. */
+  .underline-grow {
+    @apply relative;
+  }
+  .underline-grow::after {
+    content: "";
+    @apply absolute inset-x-0 -bottom-1 h-[2px] scale-x-0 rounded-full bg-pine transition-transform duration-300 ease-out;
+  }
+  .underline-grow[aria-current="page"]::after,
+  .underline-grow[aria-selected="true"]::after {
+    @apply scale-x-100;
   }
 }
 

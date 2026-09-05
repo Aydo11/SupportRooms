@@ -1,7 +1,7 @@
 "use client";
+import { useActionState } from "react";
 
 import Link from "next/link";
-import { useFormState } from "react-dom";
 import { startConversationAction } from "@/server/actions/engagement";
 import { FormError, SubmitButton } from "./ui";
 
@@ -16,7 +16,7 @@ export function MessageProviderForm({
   signedIn: boolean;
   companyName?: string;
 }) {
-  const [state, action] = useFormState(startConversationAction, { ok: false });
+  const [state, action] = useActionState(startConversationAction, { ok: false });
 
   if (!signedIn) {
     return (

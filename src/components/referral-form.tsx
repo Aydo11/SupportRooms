@@ -1,44 +1,63 @@
 "use client";
+import { useActionState } from "react";
 
-import { useFormState } from "react-dom";
 import { createReferralAction } from "@/server/actions/referrals";
 import { CheckGroup, Field, FormError, SubmitButton } from "./ui";
 import { SUPPORT_TYPES, URGENCY_LABELS } from "@/lib/taxonomy";
 
 export function ReferralForm({
   listingId,
+  clientId,
   defaults,
 }: {
   listingId?: string;
-  defaults?: { organisation?: string };
+  clientId?: string;
+  defaults?: {
+    organisation?: string;
+    applicantFirstName?: string;
+    applicantLastName?: string;
+    applicantDob?: string;
+    applicantPhone?: string;
+    applicantEmail?: string;
+    preferredLocation?: string;
+    accommodationNeeds?: string;
+    supportNeeds?: string;
+    supportTypes?: string[];
+  };
 }) {
-  const [state, action] = useFormState(createReferralAction, { ok: false });
+  const [state, action] = useActionState(createReferralAction, { ok: false });
 
   return (
     <form action={action} className="space-y-6">
       {listingId && <input type="hidden" name="listingId" value={listingId} />}
+      {clientId && <input type="hidden" name="clientId" value={clientId} />}
+      {clientId && (
+        <div className="rounded-[10px] border border-pine/25 bg-pine-light px-4 py-3 text-[14px] text-pine-dark">
+          Pre-filled from your saved client. Anything you change here only affects this referral.
+        </div>
+      )}
       <FormError message={state.errors?.form} />
 
       <section className="card space-y-4 p-6">
         <h2 className="text-[20px]">About the person you&apos;re referring</h2>
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="First name" name="applicantFirstName" error={state.errors?.applicantFirstName}>
-            <input id="applicantFirstName" name="applicantFirstName" className="field" />
+            <input id="applicantFirstName" name="applicantFirstName" defaultValue={defaults?.applicantFirstName} className="field" />
           </Field>
           <Field label="Last name" name="applicantLastName" error={state.errors?.applicantLastName}>
-            <input id="applicantLastName" name="applicantLastName" className="field" />
+            <input id="applicantLastName" name="applicantLastName" defaultValue={defaults?.applicantLastName} className="field" />
           </Field>
           <Field label="Date of birth" name="applicantDob">
-            <input id="applicantDob" name="applicantDob" type="date" className="field" />
+            <input id="applicantDob" name="applicantDob" type="date" defaultValue={defaults?.applicantDob} className="field" />
           </Field>
           <Field label="Contact phone" name="applicantPhone">
-            <input id="applicantPhone" name="applicantPhone" className="field" />
+            <input id="applicantPhone" name="applicantPhone" defaultValue={defaults?.applicantPhone} className="field" />
           </Field>
           <Field label="Contact email" name="applicantEmail" hint="If they have one — it links the referral to their account.">
-            <input id="applicantEmail" name="applicantEmail" type="email" className="field" />
+            <input id="applicantEmail" name="applicantEmail" type="email" defaultValue={defaults?.applicantEmail} className="field" />
           </Field>
           <Field label="Preferred area" name="preferredLocation">
-            <input id="preferredLocation" name="preferredLocation" className="field" />
+            <input id="preferredLocation" name="preferredLocation" defaultValue={defaults?.preferredLocation} className="field" />
           </Field>
         </div>
       </section>
@@ -60,16 +79,16 @@ export function ReferralForm({
         <Field label="Support categories" name="supportTypes">
           <CheckGroup
             name="supportTypes"
-            selected={[]}
+            selected={defaults?.supportTypes ?? []}
             options={SUPPORT_TYPES.map((t) => ({ value: t.slug, label: t.label }))}
             columns={3}
           />
         </Field>
         <Field label="Accommodation needs" name="accommodationNeeds">
-          <textarea id="accommodationNeeds" name="accommodationNeeds" rows={4} className="field" />
+          <textarea id="accommodationNeeds" name="accommodationNeeds" rows={4} defaultValue={defaults?.accommodationNeeds} className="field" />
         </Field>
         <Field label="Support needs" name="supportNeeds">
-          <textarea id="supportNeeds" name="supportNeeds" rows={5} className="field" />
+          <textarea id="supportNeeds" name="supportNeeds" rows={5} defaultValue={defaults?.supportNeeds} className="field" />
         </Field>
         <Field label="How urgent is this" name="urgency">
           <select id="urgency" name="urgency" defaultValue="MEDIUM" className="field">

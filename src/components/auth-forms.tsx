@@ -1,8 +1,7 @@
 "use client";
 
-import { useFormState } from "react-dom";
 import { useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useState, useActionState } from "react";
 import Link from "next/link";
 import { forgotPasswordAction, loginAction, registerAction, resetPasswordAction } from "@/server/actions/auth";
 import { Field, FormError, FormSuccess, SubmitButton } from "./ui";
@@ -10,7 +9,7 @@ import { ORG_TYPES } from "@/lib/taxonomy";
 
 export function LoginForm({ googleEnabled = false }: { googleEnabled?: boolean }) {
   const params = useSearchParams();
-  const [state, action] = useFormState(loginAction, { ok: false });
+  const [state, action] = useActionState(loginAction, { ok: false });
 
   return (
     <form action={action} className="mt-7 space-y-4">
@@ -43,7 +42,7 @@ function GoogleMark() {
 }
 
 export function ForgotPasswordForm() {
-  const [state, action] = useFormState(forgotPasswordAction, { ok: false });
+  const [state, action] = useActionState(forgotPasswordAction, { ok: false });
   return (
     <form action={action} className="card mt-7 space-y-4 p-5 sm:p-6">
       <FormError message={state.errors?.form} />
@@ -61,7 +60,7 @@ export function ForgotPasswordForm() {
 }
 
 export function ResetPasswordForm({ token }: { token: string }) {
-  const [state, action] = useFormState(resetPasswordAction, { ok: false });
+  const [state, action] = useActionState(resetPasswordAction, { ok: false });
   return (
     <form action={action} className="card mt-7 space-y-4 p-5 sm:p-6">
       <input type="hidden" name="token" value={token} />
@@ -99,7 +98,7 @@ export function RegisterForm() {
   const params = useSearchParams();
   const initial = (params.get("type") as "USER" | "PROVIDER" | "REFERRER" | null) ?? "USER";
   const [type, setType] = useState<"USER" | "PROVIDER" | "REFERRER">(initial);
-  const [state, action] = useFormState(registerAction, { ok: false });
+  const [state, action] = useActionState(registerAction, { ok: false });
 
   return (
     <form action={action} className="mt-8 space-y-6">

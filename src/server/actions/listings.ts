@@ -371,17 +371,79 @@ export async function submitListingAction(listingId: string) {
   redirect(`/provider/adverts/${listingId}`);
 }
 
-export async function setListingStatusAction(listingId: string, status: "ACTIVE" | "PAUSED" | "ARCHIVED") {
+export async function setListingStatusAction(
+  listingId: string,
+  status: "ACTIVE" | "PAUSED" | "ARCHIVED" | "DRAFT",
+) {
   const { user } = await requireCompany();
   const listing = await db.listing.findUnique({ where: { id: listingId }, select: { companyId: true, status: true } });
-  if (!listing) return;
+  if (!listing) return { ok: false, message: "Advert not found." };
   await assertCompanyAccess(user, listing.companyId);
+
   // A provider can pause or archive, but cannot self-approve an unapproved advert.
-  if (status === "ACTIVE" && !["PAUSED", "ACTIVE"].includes(listing.status)) return;
+  if (status === "ACTIVE" && !["PAUSED", "ACTIVE"].includes(listing.status)) {
+    return { ok: false, message: "Only a paused advert can be made live directly — submit for review otherwise." };
+  }
+  // Unarchiving deliberately lands back in Draft, not straight to Active: an
+  // archived advert may be stale (rent, availability, staff have all moved on
+  // since it was put away), so it goes through review again rather than
+  // silently reappearing in search.
+  if (status === "DRAFT" && listing.status !== "ARCHIVED") {
+    return { ok: false, message: "Only an archived advert can be restored." };
+  }
 
   await db.listing.update({ where: { id: listingId }, data: { status } });
   await audit({ actorId: user.id, action: `listing.${status.toLowerCase()}`, targetType: "Listing", targetId: listingId });
   revalidatePath("/provider/adverts");
+  revalidatePath(`/provider/adverts/${listingId}`);
+
+  const messages: Record<string, string> = {
+    ACTIVE: "Advert is live again.",
+    PAUSED: "Advert paused. It won't appear in search until you make it live again.",
+    ARCHIVED: "Advert archived. Restore it any time from here.",
+    DRAFT: "Restored to drafts. Submit it for review to make it live again.",
+  };
+  return { ok: true, message: messages[status] };
+}
+
+/**
+ * Hard delete. Only allowed once an advert is out of the live pipeline
+ * (Draft, Rejected or Archived) — an advert with an active audience is
+ * archived, not deleted, so anyone who saved it or has an open request
+ * against it isn't left with a dangling reference mid-conversation.
+ *
+ * Requests, media, and saved-listing rows cascade automatically (see
+ * schema). Referrals and conversations keep their own copy of what matters
+ * and simply lose the listing link (SetNull) — referral and message history
+ * is never destroyed by deleting an advert.
+ */
+export async function deleteListingAction(listingId: string) {
+  const { user } = await requireCompany();
+  const listing = await db.listing.findUnique({
+    where: { id: listingId },
+    select: { companyId: true, status: true, propertyId: true, title: true },
+  });
+  if (!listing) return { ok: false, message: "Advert not found." };
+  await assertCompanyAccess(user, listing.companyId);
+
+  if (!["DRAFT", "REJECTED", "ARCHIVED"].includes(listing.status)) {
+    return { ok: false, message: "Pause or archive a live advert before deleting it." };
+  }
+
+  await db.$transaction(async (tx) => {
+    // Rooms are scoped to this listing specifically (a property can in
+    // principle host more than one), so only detach the ones this advert
+    // actually created.
+    await tx.room.deleteMany({ where: { listingId } });
+    await tx.listing.delete({ where: { id: listingId } });
+
+    const remaining = await tx.listing.count({ where: { propertyId: listing.propertyId } });
+    if (remaining === 0) await tx.property.delete({ where: { id: listing.propertyId } });
+  });
+
+  await audit({ actorId: user.id, action: "listing.deleted", targetType: "Listing", targetId: listingId, metadata: { title: listing.title } });
+  revalidatePath("/provider/adverts");
+  return { ok: true, message: "Advert deleted." };
 }
 
 export async function updateRoomStatusAction(roomId: string, status: RoomStatus) {

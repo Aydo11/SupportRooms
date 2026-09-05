@@ -168,6 +168,7 @@ export const requestSchema = z.object({
 
 export const referralSchema = z.object({
   listingId: z.string().optional().or(z.literal("")),
+  clientId: z.string().optional().or(z.literal("")),
   applicantFirstName: z.string().trim().min(1, "Enter the applicant's first name.").max(80),
   applicantLastName: z.string().trim().min(1, "Enter the applicant's last name.").max(80),
   applicantDob: z.string().optional().or(z.literal("")),
@@ -184,6 +185,26 @@ export const referralSchema = z.object({
   consent: z.literal("on", {
     errorMap: () => ({ message: "Confirm you have the applicant's consent to share this information." }),
   }),
+});
+
+export const clientSchema = z.object({
+  firstName: z.string().trim().min(1, "Enter a first name.").max(80),
+  lastName: z.string().trim().min(1, "Enter a last name.").max(80),
+  dateOfBirth: z.string().optional().or(z.literal("")),
+  phone: optionalText(30),
+  email: z.string().trim().email().optional().or(z.literal("")),
+  preferredLocation: optionalText(160),
+  accommodationNeeds: z.string().trim().max(3000).optional().or(z.literal("")),
+  supportNeeds: z.string().trim().max(3000).optional().or(z.literal("")),
+  supportTypes: z.array(z.string()).default([]),
+  riskNotes: z.string().trim().max(3000).optional().or(z.literal("")),
+  status: z.enum(["ACTIVE", "PLACED", "ARCHIVED"]).default("ACTIVE"),
+});
+
+export const clientShareSchema = z.object({
+  clientId: z.string().min(1),
+  companyId: z.string().min(1),
+  note: z.string().trim().max(1000).optional().or(z.literal("")),
 });
 
 export const messageSchema = z.object({

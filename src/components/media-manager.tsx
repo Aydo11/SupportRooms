@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
-import { useFormState } from "react-dom";
+import { useEffect, useState, useTransition, useActionState } from "react";
 import {
   deleteMediaAction,
   reorderMediaAction,
@@ -25,7 +24,7 @@ export function MediaManager({ listingId, status, media, rooms, permanentStorage
   rooms: Room[];
   permanentStorage: boolean;
 }) {
-  const [state, action] = useFormState(uploadListingMediaAction, { ok: false });
+  const [state, action] = useActionState(uploadListingMediaAction, { ok: false });
   const [items, setItems] = useState(media);
   const [dragging, setDragging] = useState<string | null>(null);
   const [savedId, setSavedId] = useState<string | null>(null);

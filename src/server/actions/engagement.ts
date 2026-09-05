@@ -153,6 +153,22 @@ export async function sendMessageAction(_prev: FormState, formData: FormData): P
 
   await assertConversationAccess(user.id, parsed.data.conversationId);
 
+  const others = await db.conversationParticipant.findMany({
+    where: { conversationId: parsed.data.conversationId, userId: { not: user.id } },
+    select: { userId: true },
+  });
+  // A block placed after a conversation already exists must still stop new
+  // messages both ways — this only ran on the very first message before.
+  const blocked = await db.block.findFirst({
+    where: {
+      OR: [
+        { blockerId: user.id, blockedId: { in: others.map((o) => o.userId) } },
+        { blockedId: user.id, blockerId: { in: others.map((o) => o.userId) } },
+      ],
+    },
+  });
+  if (blocked) return { ok: false, errors: { form: "You can't message this account." } };
+
   await db.message.create({
     data: { conversationId: parsed.data.conversationId, senderId: user.id, body: parsed.data.body },
   });
@@ -161,10 +177,6 @@ export async function sendMessageAction(_prev: FormState, formData: FormData): P
     data: { lastMessageAt: new Date() },
   });
 
-  const others = await db.conversationParticipant.findMany({
-    where: { conversationId: parsed.data.conversationId, userId: { not: user.id } },
-    select: { userId: true },
-  });
   await Promise.all(
     others.map((p) =>
       notify({
@@ -192,12 +204,20 @@ export async function markConversationReadAction(conversationId: string) {
 
 export async function blockUserAction(blockedId: string, reason?: string) {
   const user = await requireUser();
+  if (blockedId === user.id) return;
   await db.block.upsert({
     where: { blockerId_blockedId: { blockerId: user.id, blockedId } },
     create: { blockerId: user.id, blockedId, reason },
     update: { reason },
   });
   await audit({ actorId: user.id, action: "user.blocked", targetType: "User", targetId: blockedId });
+  revalidatePath("/messages");
+}
+
+export async function unblockUserAction(blockedId: string) {
+  const user = await requireUser();
+  await db.block.deleteMany({ where: { blockerId: user.id, blockedId } });
+  await audit({ actorId: user.id, action: "user.unblocked", targetType: "User", targetId: blockedId });
   revalidatePath("/messages");
 }
 

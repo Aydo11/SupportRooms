@@ -51,13 +51,14 @@ const nextConfig = {
     // Deliberately narrow. Widen it to the hosts you actually serve images from.
     remotePatterns: [{ protocol: "https", hostname: "**.amazonaws.com" }],
   },
-  experimental: {
-    serverActions: {
-      bodySizeLimit: "25mb",
-      // Server Actions are rejected unless the Origin matches. In production set
-      // APP_URL so this is the real host rather than whatever the proxy claims.
-      allowedOrigins: process.env.APP_URL ? [new URL(process.env.APP_URL).host] : undefined,
-    },
+  // Stable top-level config as of Next 15+ (Next 16 warns/ignores this under
+  // `experimental`, which silently drops the origin allow-list — the kind of
+  // thing that looks like "server actions randomly fail in production").
+  serverActions: {
+    bodySizeLimit: "25mb",
+    // Server Actions are rejected unless the Origin matches. In production set
+    // APP_URL so this is the real host rather than whatever the proxy claims.
+    allowedOrigins: process.env.APP_URL ? [new URL(process.env.APP_URL).host] : undefined,
   },
   async headers() {
     return [

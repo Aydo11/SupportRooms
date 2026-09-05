@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { useFormState } from "react-dom";
+import { useState, useTransition, useActionState } from "react";
 import { useRouter } from "next/navigation";
 import { deleteAccountAction, exportMyDataAction } from "@/server/actions/profile";
 import { changePasswordAction, logoutEverywhereAction } from "@/server/actions/auth";
@@ -71,7 +70,7 @@ export function AccountSettings() {
 }
 
 function SecuritySection() {
-  const [state, action] = useFormState(changePasswordAction, { ok: false });
+  const [state, action] = useActionState(changePasswordAction, { ok: false });
 
   return (
     <div className="card mt-6 p-6">

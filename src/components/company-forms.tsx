@@ -1,6 +1,6 @@
 "use client";
+import { useActionState } from "react";
 
-import { useFormState } from "react-dom";
 import { requestVerificationAction, updateCompanyAction } from "@/server/actions/company";
 import { CheckGroup, Field, FormError, FormSuccess, SubmitButton } from "./ui";
 import { ORG_TYPES, SUPPORT_TYPES } from "@/lib/taxonomy";
@@ -26,7 +26,7 @@ export function CompanyForm({
     logoUrl: string | null;
   };
 }) {
-  const [state, action] = useFormState(updateCompanyAction, { ok: false });
+  const [state, action] = useActionState(updateCompanyAction, { ok: false });
 
   return (
     <form action={action} className="card space-y-4 p-6">
@@ -111,7 +111,7 @@ export function CompanyForm({
 }
 
 export function VerificationForm() {
-  const [state, action] = useFormState(requestVerificationAction, { ok: false });
+  const [state, action] = useActionState(requestVerificationAction, { ok: false });
 
   return (
     <form action={action} className="space-y-4">

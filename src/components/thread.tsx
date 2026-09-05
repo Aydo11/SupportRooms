@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { useFormState } from "react-dom";
+import { useEffect, useRef, useState, useActionState } from "react";
 import { sendMessageAction } from "@/server/actions/engagement";
 import { SubmitButton } from "./ui";
 
@@ -27,7 +26,7 @@ export function Thread({
   initialMessages: ThreadMessage[];
 }) {
   const [messages, setMessages] = useState(initialMessages);
-  const [state, action] = useFormState(sendMessageAction, { ok: false });
+  const [state, action] = useActionState(sendMessageAction, { ok: false });
   const endRef = useRef<HTMLDivElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
 

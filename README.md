@@ -30,9 +30,22 @@ Password for all of them: `Password123!`
 | Admin | `admin@supportrooms.test` |
 | Looking for housing | `jordan@example.test`, `amara@example.test`, `kieran@example.test`, `priya@example.test` |
 | Provider | `dan@ashfieldsupported.test`, `hafsa@northgatetrust.test`, `marcus@beaconrecovery.test`, `nadia@harboursideliving.test` |
-| Referrer | `referrer@example.test`, `housingoptions@example.test` |
+| Referrer | `referrer@example.test` (Pro plan, 3 clients), `housingoptions@example.test` (Free plan) |
 
 Every organisation, person, address and postcode in the seed is invented.
+
+### Database
+
+`DATABASE_URL` is the runtime connection; `DIRECT_URL` is what schema commands (`db push`,
+`migrate`) use. For a single local Postgres they're identical — `.env.example` already sets them
+that way. On a hosted database behind a pooler (Neon, Supabase, PgBouncer in transaction mode),
+point `DATABASE_URL` at the pooled endpoint and `DIRECT_URL` at the unpooled one, or schema pushes
+will fail against a pooler that doesn't support prepared statements.
+
+`GET /api/health` checks the database connection and returns 503 if it's unreachable — point your
+host's readiness probe at it instead of `/`, which renders a full page. In development, any query
+slower than 200ms is logged to the console (`SLOW_QUERY_THRESHOLD_MS` to change the bar) — the
+cheapest way to notice a missing index before it's a production problem.
 
 ---
 
@@ -50,8 +63,13 @@ notifications, data export and account deletion.
 media manager with captions, room labels, photo/video upload, mobile reordering and a primary image, a room status board, requests and referrals
 worklists, membership and billing, company profile and verification.
 
-**Referrers** (`/referrals`) — referral list, a referral form with private document upload, and a
-per-referral timeline.
+**Referrers** (`/referrals`) — referral list, a referral form with private document upload, a
+per-referral timeline, a client caseload (`/referrals/clients`) for saving the people you support
+once and referring or sharing their profile with a provider without re-typing anything, and a
+paid referrer plan (`/referrals/membership`) for anyone using this as a real referral stream.
+
+**Providers also see** (`/provider/clients`) — client profiles a referrer has shared with them: a
+heads-up with contact details, not an application, revocable by the referrer at any time.
 
 **Admin** (`/admin`) — advert approval queue, verification review, reports, users, providers,
 requests, referrals, memberships and payments, support categories, and an audit log.
