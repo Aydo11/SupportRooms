@@ -36,16 +36,13 @@ export default async function AdminHome() {
       nav={nav}
       active="/admin"
     >
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Live adverts" value={live} hint={`${pending} awaiting review`} />
-        <StatCard label="Rooms available" value={available} hint={`of ${rooms} rooms`} />
-        <StatCard label="People" value={users} hint={`${companies} providers`} />
-        <StatCard label="Open reports" value={reports} />
-      </div>
-
-      <div className="mt-4 grid gap-4 sm:grid-cols-2">
-        <StatCard label="Requests made" value={requests} />
-        <StatCard label="Referrals made" value={referrals} />
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+        <StatCard compact label="Live adverts" value={live} hint={`${pending} awaiting review`} />
+        <StatCard compact label="Rooms available" value={available} hint={`of ${rooms} rooms`} />
+        <StatCard compact label="Users" value={users} hint={`${companies} providers`} />
+        <StatCard compact label="Requests" value={requests} />
+        <StatCard compact label="Referrals" value={referrals} />
+        <StatCard compact label="Open reports" value={reports} />
       </div>
 
       {pending > 0 && (

@@ -63,12 +63,12 @@ export function DashboardShell({
   );
 }
 
-export function StatCard({ label, value, hint }: { label: string; value: string | number; hint?: string }) {
+export function StatCard({ label, value, hint, compact = false }: { label: string; value: string | number; hint?: string; compact?: boolean }) {
   return (
-    <div className="card p-5">
+    <div className={clsx("card", compact ? "p-3.5" : "p-5")}>
       <p className="text-[13px] text-ink-faint">{label}</p>
-      <p className="mt-1 font-display text-[30px] leading-none">{value}</p>
-      {hint && <p className="mt-2 text-[13px] text-ink-soft">{hint}</p>}
+      <p className={clsx("mt-1 font-display leading-none", compact ? "text-[24px]" : "text-[30px]")}>{value}</p>
+      {hint && <p className={clsx("text-[13px] text-ink-soft", compact ? "mt-1" : "mt-2")}>{hint}</p>}
     </div>
   );
 }
@@ -76,17 +76,19 @@ export function StatCard({ label, value, hint }: { label: string; value: string 
 export function DataTable({
   head,
   children,
+  compact = false,
 }: {
   head: string[];
   children: React.ReactNode;
+  compact?: boolean;
 }) {
   return (
     <div className="card overflow-x-auto">
-      <table className="w-full min-w-[640px] text-left text-[14px]">
+      <table className={clsx("w-full min-w-[640px] text-left", compact ? "text-[13px] [&_td]:px-3 [&_td]:py-2" : "text-[14px]")}>
         <thead className="border-b border-line text-[13px] text-ink-faint">
           <tr>
             {head.map((cell) => (
-              <th key={cell} scope="col" className="px-4 py-3 font-medium">{cell}</th>
+              <th key={cell} scope="col" className={clsx("font-medium", compact ? "px-3 py-2" : "px-4 py-3")}>{cell}</th>
             ))}
           </tr>
         </thead>

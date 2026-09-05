@@ -5,22 +5,26 @@ import { DashboardShell, DataTable } from "@/components/dashboard-shell";
 import { adminNav } from "../nav";
 import { PIPELINE_LABELS } from "@/lib/taxonomy";
 import { shortDate } from "@/lib/format";
+import { AdminPagination, ADMIN_PAGE_SIZE, pageNumber } from "@/components/admin-pagination";
 
 export const metadata = { title: "Requests" };
 export const dynamic = "force-dynamic";
 
-export default async function AdminRequestsPage() {
+export default async function AdminRequestsPage({ searchParams }: { searchParams: Promise<{ page?: string }> }) {
   await requireAdmin();
-  const [nav, requests] = await Promise.all([
+  const page = pageNumber((await searchParams).page);
+  const [nav, requests, total] = await Promise.all([
     adminNav(),
     db.accommodationRequest.findMany({
       orderBy: { createdAt: "desc" },
-      take: 100,
+      skip: (page - 1) * ADMIN_PAGE_SIZE,
+      take: ADMIN_PAGE_SIZE,
       include: {
         listing: { select: { id: true, title: true, company: { select: { name: true } } } },
         applicant: { select: { firstName: true, lastName: true } },
       },
     }),
+    db.accommodationRequest.count(),
   ]);
 
   return (
@@ -30,7 +34,7 @@ export default async function AdminRequestsPage() {
       nav={nav}
       active="/admin/requests"
     >
-      <DataTable head={["Applicant", "Advert", "Provider", "Status", "Made"]}>
+      <DataTable compact head={["Applicant", "Advert", "Provider", "Status", "Made"]}>
         {requests.map((request) => (
           <tr key={request.id}>
             <td className="px-4 py-3">
@@ -47,6 +51,7 @@ export default async function AdminRequestsPage() {
           </tr>
         ))}
       </DataTable>
+      <AdminPagination page={page} total={total} />
     </DashboardShell>
   );
 }

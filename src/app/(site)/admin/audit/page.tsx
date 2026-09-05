@@ -3,19 +3,23 @@ import { requireAdmin } from "@/lib/rbac";
 import { DashboardShell, DataTable } from "@/components/dashboard-shell";
 import { adminNav } from "../nav";
 import { shortDate } from "@/lib/format";
+import { AdminPagination, ADMIN_PAGE_SIZE, pageNumber } from "@/components/admin-pagination";
 
 export const metadata = { title: "Audit log" };
 export const dynamic = "force-dynamic";
 
-export default async function AdminAuditPage() {
+export default async function AdminAuditPage({ searchParams }: { searchParams: Promise<{ page?: string }> }) {
   await requireAdmin();
-  const [nav, entries] = await Promise.all([
+  const page = pageNumber((await searchParams).page);
+  const [nav, entries, total] = await Promise.all([
     adminNav(),
     db.auditLog.findMany({
       orderBy: { createdAt: "desc" },
-      take: 200,
+      skip: (page - 1) * ADMIN_PAGE_SIZE,
+      take: ADMIN_PAGE_SIZE,
       include: { actor: { select: { firstName: true, lastName: true, email: true } } },
     }),
+    db.auditLog.count(),
   ]);
 
   return (
@@ -25,7 +29,7 @@ export default async function AdminAuditPage() {
       nav={nav}
       active="/admin/audit"
     >
-      <DataTable head={["When", "Who", "Action", "Target"]}>
+      <DataTable compact head={["When", "Who", "Action", "Target"]}>
         {entries.map((entry) => (
           <tr key={entry.id}>
             <td className="px-4 py-3 text-ink-soft">
@@ -41,6 +45,7 @@ export default async function AdminAuditPage() {
           </tr>
         ))}
       </DataTable>
+      <AdminPagination page={page} total={total} />
     </DashboardShell>
   );
 }
