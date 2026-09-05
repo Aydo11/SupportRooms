@@ -202,6 +202,51 @@ export function referrerPriceIdFor(tier: MembershipTier) {
   return { REFERRER_FREE: null, REFERRER_PRO: process.env.STRIPE_PRICE_REFERRER_PRO ?? null, FREE: null, PROFESSIONAL: null, BUSINESS: null }[tier];
 }
 
+/**
+ * Older production databases pre-date referrer memberships. `prisma db push`
+ * creates the columns and tables, but it deliberately does not create catalogue
+ * rows. Create only the missing defaults here so referrer pages self-repair
+ * without running the full demo seed or overwriting admin-edited pricing.
+ */
+export async function ensureReferrerMembershipCatalogue() {
+  await db.$transaction([
+    db.membership.upsert({
+      where: { tier: "REFERRER_FREE" },
+      update: {},
+      create: {
+        tier: "REFERRER_FREE",
+        audience: "REFERRER",
+        name: "Free",
+        priceMonthly: 0,
+        maxListings: 0,
+        maxRooms: 0,
+        maxStaff: 0,
+        maxClients: 5,
+        maxSharesPerClient: 1,
+        description: "Enough for a small caseload — try the whole flow before you commit to anything.",
+      },
+    }),
+    db.membership.upsert({
+      where: { tier: "REFERRER_PRO" },
+      update: {},
+      create: {
+        tier: "REFERRER_PRO",
+        audience: "REFERRER",
+        name: "Pro",
+        priceMonthly: 1900,
+        priceYearly: 19000,
+        maxListings: 0,
+        maxRooms: 0,
+        maxStaff: 0,
+        maxClients: -1,
+        maxSharesPerClient: -1,
+        priorityRouting: true,
+        description: "For referral agencies and professionals managing a full caseload — unlimited clients and provider sharing.",
+      },
+    }),
+  ]);
+}
+
 export async function applySubscriptionChange(params: {
   companyId: string;
   tier: MembershipTier;
@@ -277,6 +322,7 @@ export async function applyReferrerSubscriptionChange(params: {
   periodEnd?: Date;
   cancelAtPeriodEnd?: boolean;
 }) {
+  await ensureReferrerMembershipCatalogue();
   const membership = await db.membership.findUnique({ where: { tier: params.tier } });
   if (!membership) throw new Error(`Unknown membership tier ${params.tier}`);
   return db.referrerSubscription.upsert({
@@ -304,6 +350,7 @@ export async function applyReferrerSubscriptionChange(params: {
  * catalogue's REFERRER_FREE row unless you tighten it in the seed.
  */
 export async function referrerPlanLimits(userId: string) {
+  await ensureReferrerMembershipCatalogue();
   const subscription = await db.referrerSubscription.findUnique({ where: { userId }, include: { membership: true } });
   const entitled = subscription && ["ACTIVE", "TRIALING", "PAST_DUE"].includes(subscription.status);
   const membership = (entitled ? subscription.membership : null) ?? (await db.membership.findUnique({ where: { tier: "REFERRER_FREE" } }));
