@@ -1,0 +1,108 @@
+/**
+ * Upserts the membership catalogue (provider + referrer plans) without
+ * touching anything else. Safe to re-run.
+ *
+ *   npm run db:seed-memberships
+ *
+ * Use this instead of the full `db:seed` on a database that already has
+ * real users/listings/referrals on it — `db:seed` clears those tables first,
+ * this doesn't touch them.
+ */
+import { PrismaClient, type Prisma } from "@prisma/client";
+
+const db = new PrismaClient();
+const pence = (pounds: number) => Math.round(pounds * 100);
+
+const memberships: Prisma.MembershipCreateInput[] = [
+{
+tier: "FREE",
+audience: "PROVIDER",
+name: "Free",
+priceMonthly: 0,
+maxListings: 2,
+maxRooms: 10,
+maxStaff: 2,
+maxPhotos: 8,
+featuredCredits: 0,
+description: "Get started and see whether the site works for you.",
+},
+{
+tier: "PROFESSIONAL",
+audience: "PROVIDER",
+name: "Professional",
+priceMonthly: pence(49),
+priceYearly: pence(490),
+maxListings: 15,
+maxRooms: 90,
+maxStaff: 8,
+maxPhotos: 20,
+videoUploads: true,
+analytics: true,
+featuredCredits: 1,
+enhancedProfile: true,
+description: "For providers running several services. Placeholder pricing.",
+},
+{
+tier: "BUSINESS",
+audience: "PROVIDER",
+name: "Business",
+priceMonthly: pence(149),
+priceYearly: pence(1490),
+maxListings: -1,
+maxRooms: -1,
+maxStaff: -1,
+maxPhotos: 40,
+videoUploads: true,
+analytics: true,
+priorityPlacement: true,
+featuredCredits: 5,
+enhancedProfile: true,
+prioritySupport: true,
+description: "Larger portfolios, priority placement and support. Placeholder pricing.",
+},
+{
+tier: "REFERRER_FREE",
+audience: "REFERRER",
+name: "Free",
+priceMonthly: 0,
+maxListings: 0,
+maxRooms: 0,
+maxStaff: 0,
+maxClients: 5,
+maxSharesPerClient: 1,
+description: "Enough for a small caseload — try the whole flow before you commit to anything.",
+},
+{
+tier: "REFERRER_PRO",
+audience: "REFERRER",
+name: "Pro",
+priceMonthly: pence(19),
+priceYearly: pence(190),
+maxListings: 0,
+maxRooms: 0,
+maxStaff: 0,
+maxClients: -1,
+maxSharesPerClient: -1,
+priorityRouting: true,
+description: "For referral agencies and professionals managing a full caseload — unlimited clients and provider sharing.",
+},
+];
+
+async function main() {
+for (const m of memberships) {
+await db.membership.upsert({
+where: { tier: m.tier },
+create: m,
+update: m,
+});
+console.log(`Upserted membership: ${m.tier}`);
+}
+}
+
+main()
+.catch((error) => {
+console.error(error);
+process.exit(1);
+})
+.finally(() => db.$disconnect());
+
