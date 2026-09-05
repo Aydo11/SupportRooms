@@ -255,10 +255,28 @@ export default async function ListingPage({
           </div>
 
           <div className="card p-5">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <h2 className="text-[17px]">{listing.company.name}</h2>
-                <p className="mt-0.5 text-[13px] text-ink-faint">{listing.company.city}</p>
+            <div className="flex items-start gap-3">
+              {listing.company.logoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={listing.company.logoUrl}
+                  alt={`${listing.company.name} logo`}
+                  className="h-14 w-14 shrink-0 rounded-[12px] border border-line bg-white object-contain p-1.5"
+                  loading="lazy"
+                />
+              ) : (
+                <span
+                  aria-hidden="true"
+                  className="grid h-14 w-14 shrink-0 place-items-center rounded-[12px] bg-pine-light text-[15px] font-semibold uppercase text-pine-dark"
+                >
+                  {companyInitials(listing.company.name)}
+                </span>
+              )}
+              <div className="min-w-0 flex-1">
+                <h2 className="text-[17px] leading-snug">{listing.company.name}</h2>
+                {listing.company.city && (
+                  <p className="mt-0.5 text-[13px] text-ink-faint">{listing.company.city}</p>
+                )}
               </div>
               {listing.company.verification === "APPROVED" && <VerifiedBadge />}
             </div>
@@ -296,4 +314,13 @@ function Fact({ label, value, wide }: { label: string; value: string; wide?: boo
       <dd className="mt-0.5 text-[15px] leading-relaxed text-ink">{value}</dd>
     </div>
   );
+}
+
+function companyInitials(name: string) {
+  return name
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((word) => word[0])
+    .join("");
 }
