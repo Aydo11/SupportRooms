@@ -67,7 +67,7 @@ export default async function ProviderAdvertPage({
       }
     >
       <section aria-label="Manage advert" className="card overflow-hidden">
-        <div className="flex flex-wrap items-center gap-2 border-b border-line bg-paper-sunk-50 px-5 py-3">
+        <div className="flex flex-wrap items-center gap-2 border-b border-line bg-paper-sunk/50 px-5 py-3">
           <span className="mr-2 text-[13px] font-medium text-ink-soft">Advert status</span>
           <StatusPill
             status={LISTING_STATUSES[listing.status]}
