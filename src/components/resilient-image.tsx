@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type ImgHTMLAttributes } from "react";
+import { useEffect, useRef, useState, type ImgHTMLAttributes } from "react";
 
 type Props = Omit<ImgHTMLAttributes<HTMLImageElement>, "src"> & {
   src?: string | null;
@@ -11,13 +11,22 @@ type Props = Omit<ImgHTMLAttributes<HTMLImageElement>, "src"> & {
 /** Replaces lost object-storage files with an honest illustrative image. */
 export function ResilientImage({ src, fallbackSrc, fallbackLabel, alt, ...props }: Props) {
   const [failed, setFailed] = useState(!src);
+  const imageRef = useRef<HTMLImageElement>(null);
 
-  useEffect(() => setFailed(!src), [src]);
+  useEffect(() => {
+    setFailed(!src);
+
+    // A broken image may finish failing before React hydrates, so its error
+    // event is missed. Check the browser's final image state after mount too.
+    const image = imageRef.current;
+    if (src && image?.complete && image.naturalWidth === 0) setFailed(true);
+  }, [src]);
 
   return (
     <>
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
+        ref={imageRef}
         {...props}
         src={failed ? fallbackSrc : src ?? fallbackSrc}
         alt={alt}
