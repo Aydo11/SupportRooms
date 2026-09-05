@@ -5,9 +5,9 @@
 export const brand = {
   name: "SupportRooms",
   shortName: "SupportRooms",
-  tagline: "Supported accommodation, findable.",
+  tagline: "Housing and accommodation, findable.",
   description:
-    "Search supported accommodation across the UK, or advertise rooms to the people and professionals looking for them.",
+    "Find and advertise housing across the UK, including HMOs, supported and transitional accommodation, adult social care housing, shared homes and self-contained properties.",
   supportEmail: "hello@supportrooms.example",
   currency: "GBP",
   currencySymbol: "£",
