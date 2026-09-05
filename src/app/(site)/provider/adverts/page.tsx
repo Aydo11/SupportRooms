@@ -9,11 +9,22 @@ import { ListingRowActions } from "@/components/listing-row-actions";
 import { providerNav } from "../nav";
 import { LISTING_STATUSES } from "@/lib/taxonomy";
 import { rentRange, timeAgo } from "@/lib/format";
+import { SPONSOR_PACKAGES, type SponsorPackage } from "@/lib/sponsor-packages";
 
 export const metadata = { title: "My adverts" };
 export const dynamic = "force-dynamic";
 
-export default async function ProviderAdvertsPage() {
+function isSponsorPackage(value: string | undefined): value is SponsorPackage {
+  return !!value && value in SPONSOR_PACKAGES;
+}
+
+export default async function ProviderAdvertsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ sponsor?: string }>;
+}) {
+  const { sponsor } = await searchParams;
+  const sponsorChoice = isSponsorPackage(sponsor) ? sponsor : null;
   const { companyId } = await requireCompany();
   const [nav, limits, listings] = await Promise.all([
     providerNav(companyId),
@@ -48,6 +59,12 @@ export default async function ProviderAdvertsPage() {
         )
       }
     >
+      {sponsorChoice && (
+        <p className="mb-4 rounded-[10px] border border-clay/30 bg-clay-light px-4 py-3 text-[14px] text-clay-dark">
+          Pick which live advert to sponsor for {SPONSOR_PACKAGES[sponsorChoice].label} — click{" "}
+          <span className="font-medium">Sponsor this advert</span> on the one you want.
+        </p>
+      )}
       {listings.length === 0 ? (
         <EmptyState
           title="No adverts yet"
@@ -93,6 +110,14 @@ export default async function ProviderAdvertsPage() {
                   <p className="mt-3 rounded-[10px] bg-clay-light px-3 py-2 text-[13px] text-clay-dark">
                     Not approved: {listing.rejectionNote}
                   </p>
+                )}
+                {sponsorChoice && listing.status === "ACTIVE" && (
+                  <Link
+                    href={`/provider/adverts/${listing.id}?duration=${sponsorChoice}#sponsored`}
+                    className="btn-secondary mt-3 inline-flex"
+                  >
+                    Sponsor this advert
+                  </Link>
                 )}
               </div>
 
