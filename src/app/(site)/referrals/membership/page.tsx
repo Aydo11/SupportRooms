@@ -20,9 +20,11 @@ export default async function ReferrerMembershipPage({
   const billingLive = billingIsLive();
   const paymentsEnabled = billingAvailable();
 
-  const [nav, limits, plans, payments] = await Promise.all([
+  // Resolve limits first: it also creates the two referrer catalogue rows when
+  // upgrading an older production database that has no seed data yet.
+  const limits = await referrerPlanLimits(user.id);
+  const [nav, plans, payments] = await Promise.all([
     referrerNav(user.id),
-    referrerPlanLimits(user.id),
     db.membership.findMany({ where: { audience: "REFERRER" }, orderBy: { priceMonthly: "asc" } }),
     db.referrerPayment.findMany({ where: { userId: user.id }, orderBy: { createdAt: "desc" }, take: 20 }),
   ]);
