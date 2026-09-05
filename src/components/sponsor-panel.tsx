@@ -23,6 +23,7 @@ export function SponsorPanel({
   usedSlots,
   live,
   paymentsEnabled,
+  initialDuration,
 }: {
   listingId: string;
   featured: boolean;
@@ -33,9 +34,10 @@ export function SponsorPanel({
   usedSlots: number;
   live: boolean;
   paymentsEnabled: boolean;
+  initialDuration?: SponsorPackage;
 }) {
   const router = useRouter();
-  const [choice, setChoice] = useState<SponsorPackage>("MONTH");
+  const [choice, setChoice] = useState<SponsorPackage>(initialDuration ?? "MONTH");
   const [result, setResult] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const hasCredit = usedSlots < includedSlots;
