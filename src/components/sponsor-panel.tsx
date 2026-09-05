@@ -122,7 +122,13 @@ export function SponsorPanel({
               choice === option.key ? "border-pine bg-pine-light shadow-raise" : "border-line bg-white hover:border-line-strong",
             )}
           >
-            <span className={clsx("absolute right-3 top-3 grid h-5 w-5 place-items-center rounded-full border", choice === option.key ? "border-pine bg-pine text-white" : "border-line-strong")} aria-hidden="true">{choice === option.key ? "✓" : ""}</span>
+            <span className={clsx("absolute right-3 top-3 flex h-6 w-6 items-center justify-center rounded-full border", choice === option.key ? "border-pine bg-pine text-white" : "border-line-strong")} aria-hidden="true">
+              {choice === option.key && (
+                <svg viewBox="0 0 20 20" className="h-4 w-4" fill="none">
+                  <path d="m4 10.5 3.5 3.5L16 5.5" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              )}
+            </span>
             <span className="block text-[15px] font-medium">{option.label}</span>
             <span className="mt-2 block font-display text-[25px] leading-none">{hasCredit ? "Included" : money(option.price)}</span>
             {!hasCredit && <span className="mt-1 block text-[12px] text-ink-faint">{money(Math.round(option.price / (option.key === "WEEK" ? 7 : option.key === "MONTH" ? 30 : 90)))}/day</span>}

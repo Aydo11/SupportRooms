@@ -51,8 +51,12 @@ export function SponsorDurationPicker({ provider, livePayments }: { provider: bo
                     Popular
                   </span>
                 )}
-                <span className={clsx("absolute right-3 top-3 grid h-5 w-5 place-items-center rounded-full border", selected ? "border-pine bg-pine text-white" : "border-line-strong")} aria-hidden="true">
-                  {selected ? "✓" : ""}
+                <span className={clsx("absolute right-3 top-3 flex h-6 w-6 items-center justify-center rounded-full border", selected ? "border-pine bg-pine text-white" : "border-line-strong")} aria-hidden="true">
+                  {selected && (
+                    <svg viewBox="0 0 20 20" className="h-4 w-4" fill="none">
+                      <path d="m4 10.5 3.5 3.5L16 5.5" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  )}
                 </span>
                 <p className="text-[15px] font-medium">{pkg.label}</p>
                 <p className="mt-2 font-display text-[30px] leading-none">{money(pkg.amount)}</p>
