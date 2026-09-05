@@ -1,6 +1,6 @@
 # SupportRooms
 
-A UK supported-accommodation marketplace: people looking for supported housing on one side,
+A UK housing marketplace for HMOs, supported and transitional accommodation, adult social care housing, shared homes and self-contained properties: people looking for housing on one side,
 providers advertising rooms on the other, and professionals making referrals between them.
 
 Built as a working base to extend — real database, real auth, real permissions, no mock data
