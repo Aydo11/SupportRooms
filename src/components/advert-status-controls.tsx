@@ -47,8 +47,7 @@ export function AdvertStatusControls({
           <button
             className="btn-primary"
             disabled={pending}
-            onClick={() => startTransition(() => submitListingAction(listingId))}
-          >
+            onClick={() => startTransition(() => { void submitListingAction(listingId); })}          >
             Submit for review
           </button>
         )}
@@ -56,8 +55,12 @@ export function AdvertStatusControls({
           <button
             className="btn-secondary"
             disabled={pending}
+<<<<<<< HEAD
             onClick={() => changeStatus("PAUSED")}
           >
+=======
+            onClick={() => startTransition(() => { void setListingStatusAction(listingId, "PAUSED"); })}          >
+>>>>>>> ced82d263f2d2ad75e5a413d2e030103c7128483
             Pause advert
           </button>
         )}
@@ -65,8 +68,12 @@ export function AdvertStatusControls({
           <button
             className="btn-primary"
             disabled={pending}
+<<<<<<< HEAD
             onClick={() => changeStatus("ACTIVE")}
           >
+=======
+            onClick={() => startTransition(() => { void setListingStatusAction(listingId, "ACTIVE"); })}          >
+>>>>>>> ced82d263f2d2ad75e5a413d2e030103c7128483
             Make live again
           </button>
         )}
@@ -74,8 +81,12 @@ export function AdvertStatusControls({
           <button
             className="btn-ghost"
             disabled={pending}
+<<<<<<< HEAD
             onClick={() => changeStatus("ARCHIVED")}
           >
+=======
+            onClick={() => startTransition(() => { void setListingStatusAction(listingId, "ARCHIVED"); })}          >
+>>>>>>> ced82d263f2d2ad75e5a413d2e030103c7128483
             Archive
           </button>
         )}
