@@ -40,8 +40,7 @@ export function AdvertStatusControls({
           <button
             className="btn-primary"
             disabled={pending}
-            onClick={() => startTransition(() => submitListingAction(listingId))}
-          >
+            onClick={() => startTransition(() => { void submitListingAction(listingId); })}          >
             Submit for review
           </button>
         )}
@@ -49,8 +48,7 @@ export function AdvertStatusControls({
           <button
             className="btn-secondary"
             disabled={pending}
-            onClick={() => startTransition(() => setListingStatusAction(listingId, "PAUSED"))}
-          >
+            onClick={() => startTransition(() => { void setListingStatusAction(listingId, "PAUSED"); })}          >
             Pause advert
           </button>
         )}
@@ -58,8 +56,7 @@ export function AdvertStatusControls({
           <button
             className="btn-primary"
             disabled={pending}
-            onClick={() => startTransition(() => setListingStatusAction(listingId, "ACTIVE"))}
-          >
+            onClick={() => startTransition(() => { void setListingStatusAction(listingId, "ACTIVE"); })}          >
             Make live again
           </button>
         )}
@@ -67,8 +64,7 @@ export function AdvertStatusControls({
           <button
             className="btn-ghost"
             disabled={pending}
-            onClick={() => startTransition(() => setListingStatusAction(listingId, "ARCHIVED"))}
-          >
+            onClick={() => startTransition(() => { void setListingStatusAction(listingId, "ARCHIVED"); })}          >
             Archive
           </button>
         )}
