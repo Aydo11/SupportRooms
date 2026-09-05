@@ -25,13 +25,13 @@ export default async function HomePage() {
         <div aria-hidden="true" className="soft-orb absolute -right-44 bottom-[-16rem] h-[34rem] w-[34rem]" />
         <div className="shell relative grid gap-10 py-14 lg:grid-cols-[1.05fr_0.95fr] lg:py-20">
           <div className="self-center">
-            <span className="eyebrow"><span className="h-1.5 w-1.5 rounded-full bg-pine" />Rooms and support, together</span>
+            <span className="eyebrow"><span className="h-1.5 w-1.5 rounded-full bg-pine" />More housing, in one place</span>
             <h1 className="mt-5 max-w-[14ch] text-[42px] leading-[1.04] sm:text-[58px]">
-              Find supported accommodation across the UK
+              Find the right housing across the UK
             </h1>
             <p className="mt-5 max-w-[52ch] text-[17px] leading-relaxed text-ink-soft">
-              Rooms and homes with the support attached, listed by the organisations that run them.
-              Search as a person looking, or refer someone you work with.
+              Search HMOs, supported and transitional accommodation, adult social care housing,
+              shared homes and self-contained properties. Look for yourself or refer someone you support.
             </p>
 
             <div className="mt-8">
@@ -61,7 +61,7 @@ export default async function HomePage() {
         />
         <PathCard
           heading="Advertising accommodation"
-          body="List rooms with the support you offer, manage referrals and requests, and keep availability current."
+          body="List HMOs, supported housing, transitional homes, adult social care accommodation and other housing, then manage rooms, enquiries and referrals."
           href="/register?type=PROVIDER"
           cta="Advertise accommodation"
           tone="ink"
@@ -86,8 +86,8 @@ export default async function HomePage() {
       )}
 
       <section className="shell py-14">
-        <span className="text-[13px] font-semibold tracking-[0.08em] text-pine-dark">START WITH WHAT MATTERS</span>
-        <h2 className="mt-2 text-[30px]">Search by support need</h2>
+        <span className="text-[13px] font-semibold tracking-[0.08em] text-pine-dark">FIND A SUITABLE HOME</span>
+        <h2 className="mt-2 text-[30px]">Filter by housing and support need</h2>
         <div className="mt-5 flex flex-wrap gap-2">
           {SUPPORT_TYPES.filter((t) => t.slug !== "other").map((type) => (
             <Link key={type.slug} href={`/search?support=${type.slug}`} className="chip hover:-translate-y-px hover:border-pine hover:text-pine-dark">
@@ -104,7 +104,7 @@ export default async function HomePage() {
           <ol className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
             {[
               ["Create an account", "As someone looking, a provider, or a professional referrer."],
-              ["Search or advertise", "Filter by support, location and availability — or post your rooms."],
+              ["Search or advertise", "Filter by housing type, support, location and availability — or post your properties and rooms."],
               ["Message directly", "Conversations stay inside the platform, so contact details stay private."],
               ["Request or refer", "Send a structured request yourself, or a full referral if you work with someone."],
               ["Move in", "Track the offer through to move-in, with everyone seeing the same status."],
