@@ -18,7 +18,10 @@ export default async function MembershipPage({ searchParams }: { searchParams: P
   const [nav, limits, plans, payments] = await Promise.all([
     providerNav(companyId),
     planLimits(companyId),
-    db.membership.findMany({ orderBy: { priceMonthly: "asc" } }),
+    db.membership.findMany({
+      where: { audience: "PROVIDER" },
+      orderBy: { priceMonthly: "asc" },
+    }),
     db.payment.findMany({ where: { companyId }, orderBy: { createdAt: "desc" }, take: 20 }),
   ]);
 
