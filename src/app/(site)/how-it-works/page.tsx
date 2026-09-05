@@ -18,7 +18,7 @@ const AUDIENCES = [
     who: "If you advertise accommodation",
     steps: [
       ["Set up your organisation", "Company details, operating areas and the support you provide."],
-      ["Post adverts", "Room-by-room availability, photos, video, support offered and referral routes."],
+      ["Post adverts", "Advertise HMOs, supported or transitional accommodation, adult social care housing and other homes, with room-level availability, photos, video and referral routes."],
       ["Get verified", "Send us your documents. Verification is manual, and it confirms identity — not regulatory status."],
       ["Work your enquiries", "Requests and referrals arrive in one worklist with a shared status trail."],
     ],
@@ -41,8 +41,9 @@ export default function HowItWorksPage() {
     <div className="shell max-w-4xl py-14">
       <h1 className="text-[38px] leading-tight">How {brand.name} works</h1>
       <p className="mt-3 max-w-[62ch] text-[17px] leading-relaxed text-ink-soft">
-        A marketplace with two directions: people can find accommodation, and providers can find
-        people. Everything else exists to make that safe and quick.
+        One marketplace for a broad range of housing: HMOs, supported and transitional
+        accommodation, adult social care housing, shared homes and self-contained properties.
+        People can find accommodation, providers can advertise vacancies, and professionals can refer clients.
       </p>
 
       <div className="mt-12 space-y-12">
