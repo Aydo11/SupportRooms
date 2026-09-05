@@ -61,8 +61,8 @@ export const REFERRAL_ROUTES = {
 } as const;
 
 export const ORG_TYPES = {
-  SUPPORTED_ACCOMMODATION_PROVIDER: "Supported accommodation provider",
-  HOUSING_PROVIDER: "Housing provider",
+  SUPPORTED_ACCOMMODATION_PROVIDER: "Supported or adult social care accommodation provider",
+  HOUSING_PROVIDER: "Housing provider (including HMO and transitional housing)",
   MANAGING_AGENT: "Managing agent",
   LANDLORD: "Landlord",
   CHARITY: "Charity",
