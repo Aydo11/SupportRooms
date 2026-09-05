@@ -11,12 +11,25 @@ import { SponsorPanel } from "@/components/sponsor-panel";
 import { providerNav } from "../../nav";
 import { LISTING_STATUSES } from "@/lib/taxonomy";
 import { rentRange, shortDate } from "@/lib/format";
+import { SPONSOR_PACKAGES, type SponsorPackage } from "@/lib/sponsor-packages";
 
 export const dynamic = "force-dynamic";
 
-export default async function ProviderAdvertPage({ params }: { params: Promise<{ id: string }> }) {
+function isSponsorPackage(value: string | undefined): value is SponsorPackage {
+  return !!value && value in SPONSOR_PACKAGES;
+}
+
+export default async function ProviderAdvertPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ duration?: string }>;
+}) {
   const { companyId } = await requireCompany();
   const { id } = await params;
+  const { duration } = await searchParams;
+  const initialDuration = isSponsorPackage(duration) ? duration : undefined;
   const listing = await db.listing.findFirst({
     where: { id, companyId },
     include: {
@@ -54,7 +67,7 @@ export default async function ProviderAdvertPage({ params }: { params: Promise<{
       }
     >
       <section aria-label="Manage advert" className="card overflow-hidden">
-        <div className="flex flex-wrap items-center gap-2 border-b border-line bg-paper-sunk/50 px-5 py-3">
+        <div className="flex flex-wrap items-center gap-2 border-b border-line bg-paper-sunk-50 px-5 py-3">
           <span className="mr-2 text-[13px] font-medium text-ink-soft">Advert status</span>
           <StatusPill
             status={LISTING_STATUSES[listing.status]}
@@ -118,7 +131,7 @@ export default async function ProviderAdvertPage({ params }: { params: Promise<{
         )}
       </section>
 
-      <section className="mt-8">
+      <section id="sponsored" className="mt-8 scroll-mt-20">
         <h2 className="text-[20px]">Sponsored placement</h2>
         <div className="mt-3">
           <SponsorPanel
@@ -131,6 +144,7 @@ export default async function ProviderAdvertPage({ params }: { params: Promise<{
             usedSlots={usedSlots}
             live={listing.status === "ACTIVE"}
             paymentsEnabled={billingAvailable()}
+            initialDuration={initialDuration}
           />
         </div>
       </section>
