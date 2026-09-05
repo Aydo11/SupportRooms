@@ -47,7 +47,7 @@ export function LookingForForm({ ad, discoverable }: { ad: Ad | null; discoverab
             name="title"
             required
             defaultValue={ad?.title}
-            placeholder="Looking for supported accommodation in Birmingham"
+            placeholder="Looking for an HMO, supported housing or a self-contained home in Birmingham"
             className="field"
           />
         </Field>
