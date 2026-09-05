@@ -8,10 +8,11 @@ import { initials, money, monthYear } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
 
-export default async function LookingForAdPage({ params }: { params: { id: string } }) {
+export default async function LookingForAdPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const [ad, user] = await Promise.all([
     db.lookingForAd.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         user: {
           select: {

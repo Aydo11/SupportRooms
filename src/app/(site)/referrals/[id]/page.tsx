@@ -11,10 +11,11 @@ import { ageFrom, shortDate, timeAgo } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
 
-export default async function ReferralPage({ params }: { params: { id: string } }) {
-  const user = await requireUser(`/referrals/${params.id}`);
+export default async function ReferralPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const user = await requireUser(`/referrals/${id}`);
   const referral = await db.referral.findUnique({
-    where: { id: params.id },
+    where: { id },
     include: {
       listing: { select: { id: true, title: true, companyId: true, company: { select: { name: true, slug: true } } } },
       documents: { select: { id: true, name: true } },

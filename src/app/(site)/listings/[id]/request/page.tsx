@@ -8,10 +8,11 @@ import { publicLocation } from "@/lib/format";
 export const metadata = { title: "Request accommodation" };
 export const dynamic = "force-dynamic";
 
-export default async function RequestPage({ params }: { params: { id: string } }) {
-  const user = await requireUser(`/listings/${params.id}/request`);
+export default async function RequestPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const user = await requireUser(`/listings/${id}/request`);
   const listing = await db.listing.findUnique({
-    where: { id: params.id },
+    where: { id },
     include: { property: true, company: { select: { name: true } } },
   });
   if (!listing || listing.status !== "ACTIVE") notFound();

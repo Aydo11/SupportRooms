@@ -1,7 +1,12 @@
 import "server-only";
+import { cache } from "react";
 import { db } from "@/lib/db";
 import { boundingBox, distanceMiles, resolveArea, type Point } from "@/lib/geo";
 import type { Prisma } from "@prisma/client";
+
+// Search results, facets and map pins all resolve the same location during one
+// render. React's request cache prevents duplicate geocoding/network calls.
+const resolveAreaOnce = cache(resolveArea);
 
 export type SearchParams = {
   q?: string;
@@ -94,7 +99,7 @@ async function buildWhere(params: SearchParams) {
   // A place name or postcode becomes a radius search when we can geocode it,
   // and falls back to a plain name match when we can't.
   const radius = Math.min(100, Math.max(1, Number(params.radius ?? 15) || 15));
-  const centre: Point | null = bbox ? null : await resolveArea(params.where);
+  const centre: Point | null = bbox ? null : await resolveAreaOnce(params.where);
   const box = bbox ?? (centre ? boundingBox(centre, radius) : null);
 
   const AND: Prisma.ListingWhereInput[] = [...textFilter(params.q)];
@@ -379,7 +384,10 @@ export async function getListing(id: string) {
         },
       },
       property: true,
-      media: { orderBy: [{ isPrimary: "desc" }, { position: "asc" }] },
+      media: {
+        orderBy: [{ isPrimary: "desc" }, { position: "asc" }],
+        include: { room: { select: { id: true, name: true } } },
+      },
       rooms: { orderBy: { name: "asc" } },
     },
   });

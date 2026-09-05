@@ -71,8 +71,8 @@ one custom POST route (the billing webhook) verifies a shared secret.
 **Rate limiting.** `src/lib/rate-limit.ts`, applied to login, registration,
 password changes, messages, requests, referrals, reports, uploads and document
 reads. The default driver is in-process, which is real protection on one instance
-and none across several — set `RATE_LIMIT_DRIVER=redis` and implement the driver
-before scaling out.
+and none across several. Set `RATE_LIMIT_DRIVER=upstash` with the two Upstash REST
+credentials in `.env.example` before scaling out.
 
 **Audit.** Consequential actions are logged with actor, target and IP, including
 admin actions and every private document read. Admins can moderate accounts but
@@ -88,8 +88,8 @@ pins sit on the postcode, not the door.
    and a forgotten password currently needs an admin. Both need a signed,
    single-use, short-lived token.
 2. **No MFA.** Admin accounts especially should have TOTP.
-3. **Rate limiting is per-instance.** Implement the Redis driver before running
-   more than one process.
+3. **Shared rate limiting must be configured.** The Upstash driver is implemented,
+   but production remains per-instance until its environment variables are set.
 4. **The password deny-list is ten entries.** Replace it with a k-anonymity
    lookup against Have I Been Pwned's range API.
 5. **CSP allows `'unsafe-inline'` for scripts.** Move to a per-request nonce and

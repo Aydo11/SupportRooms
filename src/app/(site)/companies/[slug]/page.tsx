@@ -6,14 +6,16 @@ import { ORG_TYPES, supportLabel } from "@/lib/taxonomy";
 
 export const dynamic = "force-dynamic";
 
-export async function generateMetadata({ params }: { params: { slug: string } }) {
-  const company = await db.company.findUnique({ where: { slug: params.slug }, select: { name: true } });
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const company = await db.company.findUnique({ where: { slug }, select: { name: true } });
   return { title: company?.name ?? "Provider" };
 }
 
-export default async function CompanyPage({ params }: { params: { slug: string } }) {
+export default async function CompanyPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
   const company = await db.company.findUnique({
-    where: { slug: params.slug },
+    where: { slug },
     include: {
       listings: {
         where: { status: "ACTIVE" },

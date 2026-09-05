@@ -203,27 +203,27 @@ enum NotificationType {
 // ---------------------------------------------------------------- identity
 
 model User {
-  id            String        @id @default(cuid())
-  email         String        @unique
-  passwordHash  String
-  role          Role          @default(USER)
-  status        AccountStatus @default(ACTIVE)
-  firstName     String
-  lastName      String
-  phone         String?
-  locationLabel String?
-  contactMethod ContactMethod @default(MESSAGE)
-  emailVerified DateTime?
-  lastLoginAt   DateTime?
+  id                String        @id @default(cuid())
+  email             String        @unique
+  passwordHash      String
+  role              Role          @default(USER)
+  status            AccountStatus @default(ACTIVE)
+  firstName         String
+  lastName          String
+  phone             String?
+  locationLabel     String?
+  contactMethod     ContactMethod @default(MESSAGE)
+  emailVerified     DateTime?
+  lastLoginAt       DateTime?
   /// Bumped on password change, logout-everywhere and suspension. Any session
   /// token issued before the current value is rejected, so a stolen cookie stops
   /// working the moment the account owner reacts.
-  tokenVersion  Int           @default(0)
+  tokenVersion      Int           @default(0)
   passwordChangedAt DateTime?
-  deletedAt     DateTime?
-  retainUntil   DateTime?
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  deletedAt         DateTime?
+  retainUntil       DateTime?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
 
   profile        UserProfile?
   staffOf        CompanyStaff[]
@@ -344,24 +344,26 @@ model Property {
 }
 
 model Room {
-  id            String     @id @default(cuid())
+  id            String         @id @default(cuid())
   propertyId    String
-  property      Property   @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  property      Property       @relation(fields: [propertyId], references: [id], onDelete: Cascade)
   name          String
-  status        RoomStatus @default(AVAILABLE)
+  status        RoomStatus     @default(AVAILABLE)
   monthlyRent   Int?
   weeklyRent    Int?
-  ensuite       Boolean    @default(false)
-  furnished     Boolean    @default(true)
+  ensuite       Boolean        @default(false)
+  furnished     Boolean        @default(true)
   sizeSqm       Float?
   availableFrom DateTime?
   notes         String?
-  createdAt     DateTime   @default(now())
-  updatedAt     DateTime   @updatedAt
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
   listingId     String?
-  listing       Listing?   @relation(fields: [listingId], references: [id])
+  listing       Listing?       @relation(fields: [listingId], references: [id])
+  media         ListingMedia[]
 
   @@index([propertyId, status])
+  @@index([listingId, status])
 }
 
 model Listing {
@@ -411,10 +413,10 @@ model Listing {
   sponsoredClicks      Int       @default(0)
   views                Int       @default(0)
   enquiries            Int       @default(0)
-  publishedAt   DateTime?
-  rejectionNote String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  publishedAt          DateTime?
+  rejectionNote        String?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
 
   rooms         Room[]
   media         ListingMedia[]
@@ -427,23 +429,30 @@ model Listing {
   @@index([status, featured, featuredUntil])
   @@index([status, publishedAt])
   @@index([status, weeklyRentFrom])
+  @@index([status, availableFrom, publishedAt])
+  @@index([status, accommodationType, publishedAt])
+  @@index([companyId, status, updatedAt])
   @@index([companyId])
 }
 
 model ListingMedia {
-  id        String    @id @default(cuid())
-  listingId String
-  listing   Listing   @relation(fields: [listingId], references: [id], onDelete: Cascade)
-  type      MediaType @default(IMAGE)
-  url       String
-  caption   String?
-  position  Int       @default(0)
-  isPrimary Boolean   @default(false)
-  mimeType  String?
-  sizeBytes Int?
-  createdAt DateTime  @default(now())
+  id         String    @id @default(cuid())
+  listingId  String
+  listing    Listing   @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  type       MediaType @default(IMAGE)
+  url        String
+  storageKey String?
+  caption    String?
+  roomId     String?
+  room       Room?     @relation(fields: [roomId], references: [id], onDelete: SetNull)
+  position   Int       @default(0)
+  isPrimary  Boolean   @default(false)
+  mimeType   String?
+  sizeBytes  Int?
+  createdAt  DateTime  @default(now())
 
   @@index([listingId, position])
+  @@index([roomId, position])
 }
 
 // ---------------------------------------------------------------- seeker side
@@ -744,23 +753,23 @@ model Report {
 }
 
 model Document {
-  id                    String               @id @default(cuid())
+  id                    String                @id @default(cuid())
   ownerId               String?
-  owner                 User?                @relation(fields: [ownerId], references: [id], onDelete: SetNull)
+  owner                 User?                 @relation(fields: [ownerId], references: [id], onDelete: SetNull)
   companyId             String?
-  company               Company?             @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  company               Company?              @relation(fields: [companyId], references: [id], onDelete: Cascade)
   referralId            String?
-  referral              Referral?            @relation(fields: [referralId], references: [id], onDelete: Cascade)
+  referral              Referral?             @relation(fields: [referralId], references: [id], onDelete: Cascade)
   requestId             String?
   request               AccommodationRequest? @relation(fields: [requestId], references: [id], onDelete: Cascade)
   verificationRequestId String?
-  verificationRequest   VerificationRequest? @relation(fields: [verificationRequestId], references: [id], onDelete: Cascade)
+  verificationRequest   VerificationRequest?  @relation(fields: [verificationRequestId], references: [id], onDelete: Cascade)
   name                  String
   url                   String
   mimeType              String?
   sizeBytes             Int?
-  isPrivate             Boolean              @default(true)
-  createdAt             DateTime             @default(now())
+  isPrivate             Boolean               @default(true)
+  createdAt             DateTime              @default(now())
 }
 
 model AuditLog {

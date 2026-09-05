@@ -10,14 +10,15 @@ export const dynamic = "force-dynamic";
 export default async function NewReferralPage({
   searchParams,
 }: {
-  searchParams: { listingId?: string };
+  searchParams: Promise<{ listingId?: string }>;
 }) {
+  const query = await searchParams;
   const user = await requireReferrer();
   const nav = await referrerNav(user.id);
 
-  const listing = searchParams.listingId
+  const listing = query.listingId
     ? await db.listing.findFirst({
-        where: { id: searchParams.listingId, status: "ACTIVE" },
+        where: { id: query.listingId, status: "ACTIVE" },
         select: {
           id: true,
           title: true,

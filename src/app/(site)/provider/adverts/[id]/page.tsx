@@ -14,10 +14,11 @@ import { rentRange, shortDate } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
 
-export default async function ProviderAdvertPage({ params }: { params: { id: string } }) {
+export default async function ProviderAdvertPage({ params }: { params: Promise<{ id: string }> }) {
   const { companyId } = await requireCompany();
+  const { id } = await params;
   const listing = await db.listing.findFirst({
-    where: { id: params.id, companyId },
+    where: { id, companyId },
     include: {
       property: true,
       rooms: { orderBy: { name: "asc" } },

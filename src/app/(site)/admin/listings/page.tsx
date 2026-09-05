@@ -22,9 +22,10 @@ const TABS: { value: string; label: string }[] = [
   { value: "ARCHIVED", label: "Archived" },
 ];
 
-export default async function AdminListingsPage({ searchParams }: { searchParams: { status?: string } }) {
+export default async function AdminListingsPage({ searchParams }: { searchParams: Promise<{ status?: string }> }) {
   await requireAdmin();
-  const status = (searchParams.status ?? "PENDING_REVIEW") as ListingStatus;
+  const query = await searchParams;
+  const status = (query.status ?? "PENDING_REVIEW") as ListingStatus;
   const [nav, listings] = await Promise.all([
     adminNav(),
     db.listing.findMany({

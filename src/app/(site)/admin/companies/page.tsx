@@ -10,9 +10,10 @@ import { shortDate } from "@/lib/format";
 export const metadata = { title: "Providers" };
 export const dynamic = "force-dynamic";
 
-export default async function AdminCompaniesPage({ searchParams }: { searchParams: { q?: string } }) {
+export default async function AdminCompaniesPage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
   await requireAdmin();
-  const q = searchParams.q?.trim();
+  const query = await searchParams;
+  const q = query.q?.trim();
 
   const [nav, companies] = await Promise.all([
     adminNav(),

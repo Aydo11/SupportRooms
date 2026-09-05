@@ -11,10 +11,11 @@ export const dynamic = "force-dynamic";
 const pounds = (pence: number | null) => (pence == null ? "" : (pence / 100).toFixed(2));
 const day = (value: Date | null) => value?.toISOString().slice(0, 10) ?? "";
 
-export default async function EditAdvertPage({ params }: { params: { id: string } }) {
+export default async function EditAdvertPage({ params }: { params: Promise<{ id: string }> }) {
   const { companyId } = await requireCompany();
+  const { id } = await params;
   const listing = await db.listing.findFirst({
-    where: { id: params.id, companyId },
+    where: { id, companyId },
     include: { property: true },
   });
   if (!listing) notFound();

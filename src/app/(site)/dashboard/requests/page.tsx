@@ -10,8 +10,9 @@ import { shortDate } from "@/lib/format";
 export const metadata = { title: "My requests" };
 export const dynamic = "force-dynamic";
 
-export default async function RequestsPage({ searchParams }: { searchParams: { submitted?: string } }) {
+export default async function RequestsPage({ searchParams }: { searchParams: Promise<{ submitted?: string }> }) {
   const user = await requireUser("/dashboard/requests");
+  const query = await searchParams;
   const nav = await userNav(user.id);
 
   const [requests, referrals] = await Promise.all([
@@ -34,7 +35,7 @@ export default async function RequestsPage({ searchParams }: { searchParams: { s
       nav={nav}
       active="/dashboard/requests"
     >
-      {searchParams.submitted && (
+      {query.submitted && (
         <div className="mb-5">
           <FormSuccess message="Request sent. The provider has been notified and will be in touch through messages." />
         </div>

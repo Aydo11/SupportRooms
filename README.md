@@ -47,7 +47,7 @@ for" advert, saved properties with availability alerts, requests with a status t
 notifications, data export and account deletion.
 
 **Providers** (`/provider`) — dashboard with occupancy and analytics, multi-step advert creation,
-media manager with drag-to-reorder and a primary image, a room status board, requests and referrals
+media manager with captions, room labels, photo/video upload, mobile reordering and a primary image, a room status board, requests and referrals
 worklists, membership and billing, company profile and verification.
 
 **Referrers** (`/referrals`) — referral list, a referral form with private document upload, and a
@@ -72,7 +72,7 @@ src/app/(site)/           All pages
 src/app/api/              Private document serving, billing webhook
 ```
 
-- **Next.js 14 App Router**, TypeScript, Tailwind. Mutations are Server Actions, not REST.
+- **Next.js 16 App Router**, TypeScript, Tailwind. Mutations are Server Actions, not REST.
 - **Auth** is bcrypt plus a signed JWT (`jose`) in an httpOnly cookie. No NextAuth.
 - **Permissions** live in `src/lib/rbac.ts`. Pages call `requireUser` / `requireCompany` /
   `requireReferrer` / `requireAdmin`; actions re-check ownership before writing.
@@ -113,14 +113,27 @@ Each adapter picks a driver from an env var and exposes one interface, so nothin
 
 | Concern | File | Drivers |
 | --- | --- | --- |
-| File storage | `src/lib/storage.ts` | `local` (default), `s3` (stub) |
+| File storage | `src/lib/storage.ts` | `local` (default), AWS S3 or an S3-compatible service such as Cloudflare R2 |
 | Billing | `src/lib/billing.ts` | `mock` (default), `stripe` (stub) |
 | Email / SMS | `src/lib/notify.ts` | `console` (default), `resend`, `twilio` |
 | Map tiles | `src/components/map-view.tsx` | OpenStreetMap by default; set `NEXT_PUBLIC_MAP_TILE_URL` for a paid provider |
 | Geocoding | `src/lib/geo.ts` | `postcodes` (postcodes.io, free, UK) or `none` |
 
-The stubs throw a clear message telling you which file to implement. Prices in the seed are
-placeholders.
+Prices in the seed are placeholders.
+
+### Production media and traffic
+
+Render's local filesystem is temporary. It is fine for testing but uploaded media can disappear
+after a deploy or restart. Before inviting real providers, create an S3/R2 bucket and set
+`STORAGE_DRIVER=s3` plus the `S3_*` values shown in `.env.example`. Public media should be served
+through the bucket's public/CDN URL; private evidence stays inaccessible and is fetched through the
+permission-checked document route.
+
+For more than one web instance, create an Upstash Redis database and set
+`RATE_LIMIT_DRIVER=upstash`, `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN`. This makes
+login, messaging and upload limits consistent across every instance. Database indexes cover the
+main listing, availability and media queries, and repeated advert views are de-duplicated for 30
+minutes to avoid a write on every refresh.
 
 ---
 
@@ -134,7 +147,7 @@ next to the data rather than in middleware, private files stored outside the web
 root and served only through a permission-checked audited route, uploads verified
 by magic bytes, `sanitize-html` on the one HTML input, CSP and HSTS headers,
 rate limiting on every abusable action, and no raw SQL anywhere. Missing: email
-verification, password reset, MFA, and a shared-store rate limiter.
+verification, password reset and MFA.
 
 ## Privacy decisions worth knowing
 
@@ -163,8 +176,9 @@ adverts are always labelled. Keep all three of those honest if you extend this.
 ## Things left for you
 
 - Email templates (notifications currently log to the console).
-- Real S3 and Stripe implementations behind the existing adapters.
+- Configure S3/R2, Upstash and the production notification drivers.
+- Finish and verify the Stripe billing adapter before accepting payment.
 - A tile provider for the map if you want a basemap rather than plotted coordinates.
 - Tests. There are none.
 - Email verification, password reset and MFA (see SECURITY.md).
-- A Redis rate-limit driver before running more than one instance.
+- Automated unit, integration, accessibility and load tests in CI.

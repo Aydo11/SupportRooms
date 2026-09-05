@@ -2,7 +2,13 @@
 
 import { useState } from "react";
 
-type Media = { id: string; type: string; url: string; caption: string | null };
+type Media = {
+  id: string;
+  type: string;
+  url: string;
+  caption: string | null;
+  room?: { id: string; name: string } | null;
+};
 
 export function Gallery({ media, title }: { media: Media[]; title: string }) {
   const [active, setActive] = useState(0);
@@ -18,10 +24,10 @@ export function Gallery({ media, title }: { media: Media[]; title: string }) {
   const current = media[Math.min(active, media.length - 1)];
 
   return (
-    <div>
-      <div className="overflow-hidden rounded-card border border-line bg-black">
+    <div aria-label="Property media gallery">
+      <div className="group relative overflow-hidden rounded-card border border-line bg-black shadow-[0_8px_30px_rgba(21,42,58,.10)]">
         {current.type === "VIDEO" ? (
-          <video src={current.url} controls playsInline className="aspect-video w-full bg-black" />
+          <video src={current.url} controls playsInline preload="metadata" className="aspect-video w-full bg-black" />
         ) : current.type === "VIDEO_URL" ? (
           <div className="aspect-video w-full">
             <iframe
@@ -36,7 +42,24 @@ export function Gallery({ media, title }: { media: Media[]; title: string }) {
           // eslint-disable-next-line @next/next/no-img-element
           <img src={current.url} alt={current.caption ?? title} className="aspect-video w-full object-cover" />
         )}
+
+        {media.length > 1 && (
+          <>
+            <button type="button" onClick={() => setActive((active - 1 + media.length) % media.length)} aria-label="Previous photo or video" className="absolute left-2 top-1/2 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full bg-black/65 text-xl text-white backdrop-blur hover:bg-black/80 sm:left-4">←</button>
+            <button type="button" onClick={() => setActive((active + 1) % media.length)} aria-label="Next photo or video" className="absolute right-2 top-1/2 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full bg-black/65 text-xl text-white backdrop-blur hover:bg-black/80 sm:right-4">→</button>
+          </>
+        )}
+        <span className="absolute right-3 top-3 rounded-pill bg-black/70 px-2.5 py-1 text-[12px] font-medium text-white">
+          {active + 1} / {media.length}
+        </span>
       </div>
+
+      {(current.caption || current.room) && (
+        <div className="flex flex-wrap items-baseline justify-between gap-2 px-1 pt-3" aria-live="polite">
+          <p className="text-[14px] text-ink-soft">{current.caption ?? "Property media"}</p>
+          {current.room && <span className="chip py-0.5 text-[12px]">{current.room.name}</span>}
+        </div>
+      )}
 
       {media.length > 1 && (
         <ul className="mt-3 flex gap-2 overflow-x-auto pb-1">
@@ -45,7 +68,8 @@ export function Gallery({ media, title }: { media: Media[]; title: string }) {
               <button
                 onClick={() => setActive(index)}
                 aria-current={index === active}
-                className={`relative h-16 w-24 shrink-0 overflow-hidden rounded-[8px] border-2 ${
+                aria-label={`Show ${item.caption || item.room?.name || `${item.type === "IMAGE" ? "photo" : "video"} ${index + 1}`}`}
+                className={`relative h-16 w-24 shrink-0 overflow-hidden rounded-[8px] border-2 transition ${
                   index === active ? "border-pine" : "border-transparent"
                 }`}
               >

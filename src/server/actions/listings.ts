@@ -13,7 +13,7 @@ import { notifyCompany } from "@/lib/notify";
 import { geocode } from "@/lib/geo";
 import { fieldErrors, listingSchema, type FormState } from "@/lib/validation";
 import { bool, date, list, num, pence, reference, text } from "../form";
-import type { ReferralRoute, RoomStatus } from "@prisma/client";
+import type { Prisma, ReferralRoute, RoomStatus } from "@prisma/client";
 
 export async function saveListingAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const { user, companyId } = await requireCompany();
@@ -124,33 +124,38 @@ export async function saveListingAction(_prev: FormState, formData: FormData): P
     const existing = await db.listing.findUnique({ where: { id }, select: { companyId: true, propertyId: true } });
     if (!existing) return { ok: false, errors: { form: "Advert not found." } };
     await assertCompanyAccess(user, existing.companyId);
-    await db.property.update({ where: { id: existing.propertyId }, data: propertyFields });
-    await db.listing.update({ where: { id }, data: listingFields });
+    await db.$transaction([
+      db.property.update({ where: { id: existing.propertyId }, data: propertyFields }),
+      db.listing.update({ where: { id }, data: listingFields }),
+    ]);
   } else {
-    const property = await db.property.create({ data: { ...propertyFields, companyId } });
-    const listing = await db.listing.create({
-      data: {
-        ...listingFields,
-        companyId,
-        propertyId: property.id,
-        reference: reference("SR"),
-        status: "DRAFT",
-      },
+    const listing = await db.$transaction(async (transaction) => {
+      const property = await transaction.property.create({ data: { ...propertyFields, companyId } });
+      const created = await transaction.listing.create({
+        data: {
+          ...listingFields,
+          companyId,
+          propertyId: property.id,
+          reference: reference("SR"),
+          status: "DRAFT",
+        },
+      });
+
+      await transaction.room.createMany({
+        data: Array.from({ length: d.roomCount }, (_, i) => ({
+          propertyId: property.id,
+          listingId: created.id,
+          name: `Room ${i + 1}`,
+          status: "AVAILABLE" as RoomStatus,
+          ensuite: d.ensuite,
+          furnished: d.furnished,
+          weeklyRent: pence(d.weeklyRentFrom) ?? null,
+          availableFrom: date(d.availableFrom),
+        })),
+      });
+      return created;
     });
     listingId = listing.id;
-
-    await db.room.createMany({
-      data: Array.from({ length: d.roomCount }, (_, i) => ({
-        propertyId: property.id,
-        listingId: listing.id,
-        name: `Room ${i + 1}`,
-        status: "AVAILABLE" as RoomStatus,
-        ensuite: d.ensuite,
-        furnished: d.furnished,
-        weeklyRent: pence(d.weeklyRentFrom) ?? null,
-        availableFrom: date(d.availableFrom),
-      })),
-    });
   }
 
   await audit({
@@ -173,24 +178,35 @@ export async function uploadListingMediaAction(_prev: FormState, formData: FormD
 
   const listing = await db.listing.findUnique({
     where: { id: listingId },
-    select: { companyId: true, media: { select: { id: true } } },
+    select: {
+      companyId: true,
+      _count: { select: { media: true } },
+      media: { where: { isPrimary: true, type: "IMAGE" }, take: 1, select: { id: true } },
+    },
   });
   if (!listing) return { ok: false, errors: { form: "Advert not found." } };
   await assertCompanyAccess(user, listing.companyId);
 
-  const videoUrl = text(formData, "videoUrl");
-  if (videoUrl) {
-    await db.listingMedia.create({
-      data: { listingId, type: "VIDEO_URL", url: videoUrl, position: listing.media.length },
-    });
+  const files = formData.getAll("files").filter((f): f is File => f instanceof File && f.size > 0);
+  const videoUrl = normaliseVideoUrl(text(formData, "videoUrl"));
+  const rawVideoUrl = text(formData, "videoUrl");
+  const caption = text(formData, "caption").trim().slice(0, 160) || null;
+  const roomId = text(formData, "roomId") || null;
+
+  if (rawVideoUrl && !videoUrl) {
+    return { ok: false, errors: { videoUrl: "Use a valid YouTube or Vimeo link." } };
+  }
+  if (!files.length && !videoUrl) return { ok: false, errors: { files: "Choose a file to upload." } };
+  if (files.length > 12) return { ok: false, errors: { files: "Upload up to 12 files at a time." } };
+  if (listing._count.media + files.length + (videoUrl ? 1 : 0) > 40) {
+    return { ok: false, errors: { files: "An advert can have up to 40 photos and videos." } };
+  }
+  if (roomId) {
+    const room = await db.room.findFirst({ where: { id: roomId, listingId }, select: { id: true } });
+    if (!room) return { ok: false, errors: { roomId: "Choose a room from this advert." } };
   }
 
-  const files = formData.getAll("files").filter((f): f is File => f instanceof File && f.size > 0);
-  if (!files.length && !videoUrl) return { ok: false, errors: { files: "Choose a file to upload." } };
-
   const limits = await planLimits(listing.companyId);
-  let position = listing.media.length;
-
   for (const file of files) {
     const isVideo = file.type.startsWith("video/");
     if (isVideo && !limits.membership.videoUploads) {
@@ -198,27 +214,91 @@ export async function uploadListingMediaAction(_prev: FormState, formData: FormD
     }
     const invalid = validateUpload(file, isVideo ? "video" : "image");
     if (invalid) return { ok: false, errors: { files: invalid } };
-    if (!isVideo) {
-      const mismatch = await verifyFileContents(file, Buffer.from(await file.arrayBuffer()));
-      if (mismatch) return { ok: false, errors: { files: mismatch } };
-    }
+    const mismatch = await verifyFileContents(file, Buffer.from(await file.arrayBuffer()));
+    if (mismatch) return { ok: false, errors: { files: mismatch } };
+  }
 
-    const stored = await storage.put(file, `listings/${listingId}`);
-    await db.listingMedia.create({
-      data: {
+  let position = listing._count.media;
+  let hasPrimaryPhoto = listing.media.length > 0;
+  const uploaded: Awaited<ReturnType<typeof storage.put>>[] = [];
+  const rows: Prisma.ListingMediaCreateManyInput[] = [];
+
+  if (videoUrl) {
+    rows.push({ listingId, type: "VIDEO_URL", url: videoUrl, caption, roomId, position: position++ });
+  }
+
+  try {
+    for (const file of files) {
+      const isVideo = file.type.startsWith("video/");
+      const stored = await storage.put(file, `listings/${listingId}`);
+      uploaded.push(stored);
+      rows.push({
         listingId,
         type: isVideo ? "VIDEO" : "IMAGE",
         url: stored.url,
+        storageKey: stored.key,
+        caption,
+        roomId,
         mimeType: stored.mimeType,
         sizeBytes: stored.sizeBytes,
         position: position++,
-        isPrimary: !isVideo && position === 1,
-      },
-    });
+        isPrimary: !isVideo && !hasPrimaryPhoto,
+      });
+      if (!isVideo) hasPrimaryPhoto = true;
+    }
+    await db.listingMedia.createMany({ data: rows });
+  } catch (error) {
+    await Promise.all(uploaded.map((file) => storage.remove(file.key).catch(() => undefined)));
+    console.error("Media upload failed:", error);
+    return { ok: false, errors: { form: "The upload could not be saved. Please try again." } };
   }
 
+  await audit({ actorId: user.id, action: "listing.media_uploaded", targetType: "Listing", targetId: listingId,
+    metadata: { files: files.length, linkedVideo: Boolean(videoUrl) } });
   revalidatePath(`/provider/adverts/${listingId}/media`);
+  revalidatePath(`/listings/${listingId}`);
   return { ok: true, message: "Media uploaded." };
+}
+
+function normaliseVideoUrl(value: string) {
+  if (!value) return "";
+  try {
+    const url = new URL(value);
+    if (url.protocol !== "https:") return "";
+    const host = url.hostname.toLowerCase().replace(/^www\./, "");
+    if (host === "youtu.be" || host === "youtube.com") {
+      const id = host === "youtu.be"
+        ? url.pathname.split("/").filter(Boolean)[0]
+        : url.searchParams.get("v") ?? url.pathname.match(/^\/(?:embed|shorts)\/([\w-]{11})/)?.[1];
+      return id && /^[\w-]{11}$/.test(id) ? `https://www.youtube.com/watch?v=${id}` : "";
+    }
+    if (host === "vimeo.com") {
+      const id = url.pathname.split("/").find((part) => /^\d+$/.test(part));
+      return id ? `https://vimeo.com/${id}` : "";
+    }
+    return "";
+  } catch {
+    return "";
+  }
+}
+
+export async function updateMediaDetailsAction(listingId: string, mediaId: string, caption: string, roomId: string | null) {
+  const { user } = await requireCompany();
+  const listing = await db.listing.findUnique({ where: { id: listingId }, select: { companyId: true } });
+  if (!listing) throw new Error("Advert not found.");
+  await assertCompanyAccess(user, listing.companyId);
+
+  if (roomId) {
+    const room = await db.room.findFirst({ where: { id: roomId, listingId }, select: { id: true } });
+    if (!room) throw new Error("That room does not belong to this advert.");
+  }
+  const updated = await db.listingMedia.updateMany({
+    where: { id: mediaId, listingId },
+    data: { caption: caption.trim().slice(0, 160) || null, roomId: roomId || null },
+  });
+  if (!updated.count) throw new Error("Media not found.");
+  revalidatePath(`/provider/adverts/${listingId}/media`);
+  revalidatePath(`/listings/${listingId}`);
 }
 
 export async function reorderMediaAction(listingId: string, orderedIds: string[]) {
@@ -227,10 +307,14 @@ export async function reorderMediaAction(listingId: string, orderedIds: string[]
   if (!listing) return;
   await assertCompanyAccess(user, listing.companyId);
 
-  await db.$transaction(
-    orderedIds.map((id, index) => db.listingMedia.update({ where: { id }, data: { position: index } })),
-  );
+  const owned = await db.listingMedia.findMany({ where: { listingId }, select: { id: true } });
+  const ownedIds = new Set(owned.map((item) => item.id));
+  if (orderedIds.length !== ownedIds.size || orderedIds.some((id) => !ownedIds.has(id))) {
+    throw new Error("Invalid media order.");
+  }
+  await db.$transaction(orderedIds.map((id, index) => db.listingMedia.update({ where: { id }, data: { position: index } })));
   revalidatePath(`/provider/adverts/${listingId}/media`);
+  revalidatePath(`/listings/${listingId}`);
 }
 
 export async function setPrimaryMediaAction(listingId: string, mediaId: string) {
@@ -239,11 +323,14 @@ export async function setPrimaryMediaAction(listingId: string, mediaId: string) 
   if (!listing) return;
   await assertCompanyAccess(user, listing.companyId);
 
+  const media = await db.listingMedia.findFirst({ where: { id: mediaId, listingId, type: "IMAGE" }, select: { id: true } });
+  if (!media) throw new Error("Choose a photo from this advert.");
   await db.$transaction([
     db.listingMedia.updateMany({ where: { listingId }, data: { isPrimary: false } }),
     db.listingMedia.update({ where: { id: mediaId }, data: { isPrimary: true, position: 0 } }),
   ]);
   revalidatePath(`/provider/adverts/${listingId}/media`);
+  revalidatePath(`/listings/${listingId}`);
 }
 
 export async function deleteMediaAction(listingId: string, mediaId: string) {
@@ -251,8 +338,18 @@ export async function deleteMediaAction(listingId: string, mediaId: string) {
   const listing = await db.listing.findUnique({ where: { id: listingId }, select: { companyId: true } });
   if (!listing) return;
   await assertCompanyAccess(user, listing.companyId);
-  await db.listingMedia.delete({ where: { id: mediaId } });
+  const media = await db.listingMedia.findFirst({ where: { id: mediaId, listingId }, select: { id: true, storageKey: true, isPrimary: true } });
+  if (!media) return;
+  await db.listingMedia.delete({ where: { id: media.id } });
+  if (media.storageKey) {
+    try { await storage.remove(media.storageKey); } catch (error) { console.error("Unable to remove media object:", error); }
+  }
+  if (media.isPrimary) {
+    const next = await db.listingMedia.findFirst({ where: { listingId, type: "IMAGE" }, orderBy: { position: "asc" }, select: { id: true } });
+    if (next) await db.listingMedia.update({ where: { id: next.id }, data: { isPrimary: true } });
+  }
   revalidatePath(`/provider/adverts/${listingId}/media`);
+  revalidatePath(`/listings/${listingId}`);
 }
 
 /** Submitting for review — adverts go live only after an admin approves them. */

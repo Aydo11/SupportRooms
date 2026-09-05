@@ -19,6 +19,7 @@ import {
 import { matchScore } from "@/lib/matching";
 import { recordSponsoredClickAction } from "@/server/actions/billing";
 import { brand } from "@/brand.config";
+import { callerIp, LIMITS, rateLimit } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 
@@ -53,7 +54,11 @@ export default async function ListingPage({
   if (listing.status !== "ACTIVE" && !isOwner && user?.role !== "ADMIN") notFound();
 
   if (!isOwner) {
-    await db.listing.update({ where: { id: listing.id }, data: { views: { increment: 1 } } });
+    const viewer = user?.id ?? await callerIp();
+    const countView = await rateLimit(`view:${listing.id}:${viewer}`, LIMITS.view);
+    if (countView.ok) {
+      await db.listing.update({ where: { id: listing.id }, data: { views: { increment: 1 } } });
+    }
   }
 
   const [saved, existingRequest] = user
@@ -92,7 +97,7 @@ export default async function ListingPage({
       : null;
 
   return (
-    <div className="shell py-8">
+    <div className="shell py-6 pb-28 sm:py-8 lg:pb-8">
       {listing.status !== "ACTIVE" && (
         <p className="mb-5 rounded-[10px] border border-clay/30 bg-clay-light px-4 py-3 text-[14px] text-clay">
           This advert is {listing.status.toLowerCase().replace("_", " ")} and isn&apos;t publicly visible.
@@ -267,6 +272,18 @@ export default async function ListingPage({
 
           <MessageProviderForm listingId={listing.id} signedIn={Boolean(user)} companyName={listing.company.name} />
         </aside>
+      </div>
+
+      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-white/95 px-4 pb-[max(.75rem,env(safe-area-inset-bottom))] pt-3 shadow-[0_-8px_24px_rgba(21,42,58,.10)] backdrop-blur lg:hidden">
+        <div className="mx-auto flex max-w-lg items-center gap-3">
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-[15px] font-medium text-ink">{rentRange(listing.weeklyRentFrom, listing.weeklyRentTo)}</p>
+            <p className="text-[12px] text-ink-faint">{available.length} room{available.length === 1 ? "" : "s"} available</p>
+          </div>
+          <Link href={existingRequest ? "/dashboard/requests" : `/listings/${listing.id}/request`} className="btn-primary shrink-0 px-4">
+            {existingRequest ? "Track request" : "Request room"}
+          </Link>
+        </div>
       </div>
     </div>
   );

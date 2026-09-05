@@ -14,11 +14,11 @@ const csp = [
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "font-src 'self' https://fonts.gstatic.com data:",
   // Map tiles and uploaded images.
-  "img-src 'self' data: blob: https://tile.openstreetmap.org https://*.tile.openstreetmap.org",
+  "img-src 'self' data: blob: https: https://tile.openstreetmap.org https://*.tile.openstreetmap.org",
   "connect-src 'self' https://api.postcodes.io https://tile.openstreetmap.org https://*.tile.openstreetmap.org",
   // Only the video embeds the gallery actually builds.
   "frame-src https://www.youtube.com https://player.vimeo.com",
-  "media-src 'self' blob:",
+  "media-src 'self' blob: https:",
   "worker-src 'self' blob:",
   "manifest-src 'self'",
   "object-src 'none'",

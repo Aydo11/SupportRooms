@@ -18,7 +18,7 @@ export async function SiteHeader() {
       <div className="shell flex h-16 items-center gap-6">
         <Link href="/" className="flex items-center gap-2.5 font-display text-[21px] text-ink">
           <Logo />
-          {brand.name}
+          <span className="hidden min-[360px]:inline">{brand.name}</span>
         </Link>
 
         <nav aria-label="Main navigation" className="hidden items-center gap-6 text-[15px] text-ink-soft lg:flex">
@@ -32,7 +32,7 @@ export async function SiteHeader() {
           {user ? (
             <>
               <Link href="/messages" className="btn-ghost hidden sm:inline-flex">Messages</Link>
-              <Link href={`${home}`} className="btn-secondary">
+              <Link href={`${home}`} className="btn-secondary hidden sm:inline-flex">
                 Dashboard
                 {unread > 0 && (
                   <span className="ml-1 rounded-pill bg-pine px-1.5 py-0.5 text-[11px] font-semibold text-white">
@@ -46,14 +46,45 @@ export async function SiteHeader() {
             </>
           ) : (
             <>
-              <Link href="/login" className="btn-ghost">Sign in</Link>
-              <Link href="/register" className="btn-primary">Create account</Link>
+              <Link href="/login" className="btn-ghost hidden sm:inline-flex">Sign in</Link>
+              <Link href="/register" className="btn-primary hidden sm:inline-flex">Create account</Link>
             </>
           )}
+
+          <details className="group relative lg:hidden">
+            <summary className="grid h-11 w-11 cursor-pointer list-none place-items-center rounded-[10px] border border-line bg-white text-xl text-ink marker:hidden" aria-label="Open navigation menu">
+              <span aria-hidden="true">☰</span>
+            </summary>
+            <div className="absolute right-0 top-12 z-50 w-[min(19rem,calc(100vw-2rem))] rounded-card border border-line bg-white p-2 shadow-float">
+              <MobileLink href="/search">Search accommodation</MobileLink>
+              <MobileLink href="/how-it-works">How it works</MobileLink>
+              <MobileLink href="/people">People looking</MobileLink>
+              <MobileLink href="/pricing">Advertise</MobileLink>
+              <div className="my-2 border-t border-line" />
+              {user ? (
+                <>
+                  <MobileLink href={home}>Dashboard{unread > 0 ? ` (${unread})` : ""}</MobileLink>
+                  <MobileLink href="/messages">Messages</MobileLink>
+                  <form action={logoutAction}>
+                    <button className="w-full rounded-[9px] px-3 py-3 text-left text-[15px] text-ink-soft hover:bg-paper-sunk">Sign out</button>
+                  </form>
+                </>
+              ) : (
+                <>
+                  <MobileLink href="/login">Sign in</MobileLink>
+                  <MobileLink href="/register">Create account</MobileLink>
+                </>
+              )}
+            </div>
+          </details>
         </div>
       </div>
     </header>
   );
+}
+
+function MobileLink({ href, children }: { href: string; children: React.ReactNode }) {
+  return <Link href={href} className="block rounded-[9px] px-3 py-3 text-[15px] text-ink-soft hover:bg-paper-sunk hover:text-ink">{children}</Link>;
 }
 
 export function Logo() {

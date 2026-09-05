@@ -8,11 +8,15 @@ import { providerNav } from "../../../nav";
 export const metadata = { title: "Photos and video" };
 export const dynamic = "force-dynamic";
 
-export default async function MediaPage({ params }: { params: { id: string } }) {
+export default async function MediaPage({ params }: { params: Promise<{ id: string }> }) {
   const { companyId } = await requireCompany();
+  const { id } = await params;
   const listing = await db.listing.findFirst({
-    where: { id: params.id, companyId },
-    include: { media: { orderBy: [{ isPrimary: "desc" }, { position: "asc" }] } },
+    where: { id, companyId },
+    include: {
+      rooms: { orderBy: { name: "asc" }, select: { id: true, name: true } },
+      media: { orderBy: [{ isPrimary: "desc" }, { position: "asc" }] },
+    },
   });
   if (!listing) notFound();
 
@@ -33,8 +37,10 @@ export default async function MediaPage({ params }: { params: { id: string } }) 
           url: item.url,
           type: item.type,
           caption: item.caption,
+          roomId: item.roomId,
           isPrimary: item.isPrimary,
         }))}
+        rooms={listing.rooms}
       />
     </DashboardShell>
   );

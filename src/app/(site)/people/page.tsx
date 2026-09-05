@@ -11,15 +11,16 @@ export const dynamic = "force-dynamic";
 export default async function PeoplePage({
   searchParams,
 }: {
-  searchParams: { where?: string; support?: string; minAge?: string; maxAge?: string; page?: string };
+  searchParams: Promise<{ where?: string; support?: string; minAge?: string; maxAge?: string; page?: string }>;
 }) {
+  const query = await searchParams;
   const user = await getCurrentUser();
   const results = await searchLookingForAds({
-    where: searchParams.where,
-    support: searchParams.support ? [searchParams.support] : [],
-    minAge: searchParams.minAge,
-    maxAge: searchParams.maxAge,
-    page: searchParams.page,
+    where: query.where,
+    support: query.support ? [query.support] : [],
+    minAge: query.minAge,
+    maxAge: query.maxAge,
+    page: query.page,
   });
 
   const canContact = user?.role === "PROVIDER" || user?.role === "REFERRER" || user?.role === "ADMIN";
@@ -35,11 +36,11 @@ export default async function PeoplePage({
       <form className="card mt-6 grid gap-3 p-4 sm:grid-cols-[1.2fr_1fr_0.6fr_0.6fr_auto] sm:items-end">
         <div>
           <label className="label" htmlFor="where">Area</label>
-          <input id="where" name="where" defaultValue={searchParams.where} className="field" placeholder="Birmingham" />
+          <input id="where" name="where" defaultValue={query.where} className="field" placeholder="Birmingham" />
         </div>
         <div>
           <label className="label" htmlFor="support">Support need</label>
-          <select id="support" name="support" defaultValue={searchParams.support} className="field">
+          <select id="support" name="support" defaultValue={query.support} className="field">
             <option value="">Any</option>
             {SUPPORT_TYPES.map((type) => (
               <option key={type.slug} value={type.slug}>{type.label}</option>
@@ -48,11 +49,11 @@ export default async function PeoplePage({
         </div>
         <div>
           <label className="label" htmlFor="minAge">Min age</label>
-          <input id="minAge" name="minAge" type="number" min={16} defaultValue={searchParams.minAge} className="field" />
+          <input id="minAge" name="minAge" type="number" min={16} defaultValue={query.minAge} className="field" />
         </div>
         <div>
           <label className="label" htmlFor="maxAge">Max age</label>
-          <input id="maxAge" name="maxAge" type="number" min={16} defaultValue={searchParams.maxAge} className="field" />
+          <input id="maxAge" name="maxAge" type="number" min={16} defaultValue={query.maxAge} className="field" />
         </div>
         <button className="btn-primary h-[46px]">Search people</button>
       </form>
