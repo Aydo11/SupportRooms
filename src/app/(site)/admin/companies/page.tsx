@@ -1,9 +1,10 @@
 import Link from "next/link";
+import { AccountStatus, Prisma, VerificationStatus } from "@prisma/client";
 import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/rbac";
 import { DashboardShell, DataTable } from "@/components/dashboard-shell";
 import { AccountToggle } from "@/components/admin-controls";
-import { AdminSearch } from "@/components/admin-search";
+import { AdminFilters, AdminFilterField } from "@/components/admin-filters";
 import { adminNav } from "../nav";
 import { shortDate } from "@/lib/format";
 import { AdminPagination, ADMIN_PAGE_SIZE, pageNumber } from "@/components/admin-pagination";
@@ -11,12 +12,18 @@ import { AdminPagination, ADMIN_PAGE_SIZE, pageNumber } from "@/components/admin
 export const metadata = { title: "Providers" };
 export const dynamic = "force-dynamic";
 
-export default async function AdminCompaniesPage({ searchParams }: { searchParams: Promise<{ q?: string; page?: string }> }) {
+export default async function AdminCompaniesPage({ searchParams }: { searchParams: Promise<{ q?: string; status?: string; verification?: string; page?: string }> }) {
   await requireAdmin();
   const query = await searchParams;
   const q = query.q?.trim();
+  const status = Object.values(AccountStatus).includes(query.status as AccountStatus) ? query.status as AccountStatus : undefined;
+  const verification = Object.values(VerificationStatus).includes(query.verification as VerificationStatus) ? query.verification as VerificationStatus : undefined;
   const page = pageNumber(query.page);
-  const where = q ? { name: { contains: q, mode: "insensitive" as const } } : undefined;
+  const where: Prisma.CompanyWhereInput = {
+    ...(q ? { OR: [{ name: { contains: q, mode: "insensitive" } }, { email: { contains: q, mode: "insensitive" } }, { city: { contains: q, mode: "insensitive" } }] } : {}),
+    ...(status ? { status } : {}),
+    ...(verification ? { verification } : {}),
+  };
 
   const [nav, companies, total] = await Promise.all([
     adminNav(),
@@ -34,8 +41,12 @@ export default async function AdminCompaniesPage({ searchParams }: { searchParam
   ]);
 
   return (
-    <DashboardShell title="Providers" nav={nav} active="/admin/companies">
-      <AdminSearch placeholder="Search providers" />
+    <DashboardShell title="Providers" subtitle="Search and filter provider accounts before taking action." nav={nav} active="/admin/companies">
+      <AdminFilters>
+        <AdminFilterField label="Search" wide><input className="field" name="q" defaultValue={q} placeholder="Name, email or city" /></AdminFilterField>
+        <AdminFilterField label="Account status"><select className="field" name="status" defaultValue={status ?? ""}><option value="">All statuses</option>{Object.values(AccountStatus).map((value) => <option key={value} value={value}>{value.toLowerCase()}</option>)}</select></AdminFilterField>
+        <AdminFilterField label="Verification"><select className="field" name="verification" defaultValue={verification ?? ""}><option value="">All verification</option>{Object.values(VerificationStatus).map((value) => <option key={value} value={value}>{value.replace(/_/g, " ").toLowerCase()}</option>)}</select></AdminFilterField>
+      </AdminFilters>
       <div className="mt-4">
         <DataTable compact head={["Provider", "Plan", "Adverts", "Verification", "Status", "Joined", ""]}>
           {companies.map((company) => (
@@ -58,7 +69,7 @@ export default async function AdminCompaniesPage({ searchParams }: { searchParam
             </tr>
           ))}
         </DataTable>
-        <AdminPagination page={page} total={total} query={{ q }} />
+        <AdminPagination page={page} total={total} query={{ q, status, verification }} />
       </div>
     </DashboardShell>
   );

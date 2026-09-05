@@ -6,6 +6,7 @@ import { requireAdmin } from "@/lib/rbac";
 import { audit } from "@/lib/audit";
 import { notify, notifyCompany } from "@/lib/notify";
 import type { ReportStatus } from "@prisma/client";
+import { z } from "zod";
 
 export async function approveListingAction(listingId: string) {
   const admin = await requireAdmin("MODERATION");
@@ -129,9 +130,30 @@ export async function setCompanyStatusAction(companyId: string, status: "ACTIVE"
 
 export async function resolveReportAction(reportId: string, status: ReportStatus, resolution?: string) {
   const admin = await requireAdmin("MODERATION");
-  await db.report.update({ where: { id: reportId }, data: { status, resolution: resolution ?? null } });
-  await audit({ actorId: admin.id, action: "admin.report_resolved", targetType: "Report", targetId: reportId, metadata: { status } });
+  const id = z.string().cuid().parse(reportId);
+  const nextStatus = z.enum(["OPEN", "REVIEWING", "ACTIONED", "DISMISSED"]).parse(status);
+  const note = resolution?.trim().slice(0, 4000) || null;
+  await db.$transaction([
+    db.report.update({ where: { id }, data: { status: nextStatus, resolution: note } }),
+    db.reportEvent.create({ data: { reportId: id, actorId: admin.id, status: nextStatus, note } }),
+  ]);
+  await audit({ actorId: admin.id, action: "admin.report_updated", targetType: "Report", targetId: id, metadata: { status: nextStatus } });
   revalidatePath("/admin/reports");
+  revalidatePath(`/admin/reports/${id}`);
+}
+
+export async function archiveReportAction(reportId: string, archived: boolean) {
+  const admin = await requireAdmin("MODERATION");
+  const id = z.string().cuid().parse(reportId);
+  const report = await db.report.findUnique({ where: { id }, select: { status: true } });
+  if (!report) return;
+  await db.$transaction([
+    db.report.update({ where: { id }, data: { archivedAt: archived ? new Date() : null } }),
+    db.reportEvent.create({ data: { reportId: id, actorId: admin.id, status: report.status, note: archived ? "Archived case" : "Restored case to active reports" } }),
+  ]);
+  await audit({ actorId: admin.id, action: archived ? "admin.report_archived" : "admin.report_restored", targetType: "Report", targetId: id });
+  revalidatePath("/admin/reports");
+  revalidatePath(`/admin/reports/${id}`);
 }
 
 export async function toggleFeaturedAction(listingId: string, featured: boolean) {

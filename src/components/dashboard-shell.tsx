@@ -84,7 +84,7 @@ export function DataTable({
 }) {
   return (
     <div className="card overflow-x-auto">
-      <table className={clsx("w-full min-w-[640px] text-left", compact ? "text-[13px] [&_td]:px-3 [&_td]:py-2" : "text-[14px]")}>
+      <table className={clsx("w-full min-w-[640px] text-left", compact ? "text-[13px] [&_td]:px-3 [&_td]:py-2 [&_td_.btn]:min-h-8 [&_td_.btn]:px-2.5 [&_td_.btn]:py-1 [&_td_.btn]:text-[13px]" : "text-[14px]")}>
         <thead className="border-b border-line text-[13px] text-ink-faint">
           <tr>
             {head.map((cell) => (

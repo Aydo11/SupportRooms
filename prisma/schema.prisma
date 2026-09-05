@@ -262,6 +262,7 @@ model User {
   messages            Message[]
   participations      ConversationParticipant[]
   reportsFiled        Report[]                  @relation("ReportReporter")
+  reportEvents        ReportEvent[]             @relation("ReportEventActor")
   documents           Document[]
   auditLogs           AuditLog[]
   blocksMade          Block[]                   @relation("Blocker")
@@ -901,8 +902,25 @@ model Report {
   status     ReportStatus     @default(OPEN)
   resolution String?
   createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+  archivedAt DateTime?
+  events     ReportEvent[]
 
   @@index([status])
+  @@index([archivedAt, createdAt])
+}
+
+model ReportEvent {
+  id        String       @id @default(cuid())
+  reportId  String
+  report    Report       @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  actorId   String?
+  actor     User?        @relation("ReportEventActor", fields: [actorId], references: [id], onDelete: SetNull)
+  status    ReportStatus
+  note      String?
+  createdAt DateTime     @default(now())
+
+  @@index([reportId, createdAt])
 }
 
 model Document {

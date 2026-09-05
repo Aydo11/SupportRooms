@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
   approveListingAction,
+  archiveReportAction,
   rejectListingAction,
   resolveReportAction,
   reviewVerificationAction,
@@ -136,9 +137,9 @@ export function AccountToggle({
   );
 }
 
-export function ReportDecision({ id }: { id: string }) {
+export function ReportDecision({ id, initialResolution = "", archived = false }: { id: string; initialResolution?: string; archived?: boolean }) {
   const router = useRouter();
-  const [resolution, setResolution] = useState("");
+  const [resolution, setResolution] = useState(initialResolution);
   const [pending, startTransition] = useTransition();
   const run = (status: ReportStatus) =>
     startTransition(async () => {
@@ -160,6 +161,10 @@ export function ReportDecision({ id }: { id: string }) {
         <button className="btn-secondary" disabled={pending} onClick={() => run("REVIEWING")}>Reviewing</button>
         <button className="btn-primary" disabled={pending} onClick={() => run("ACTIONED")}>Actioned</button>
         <button className="btn-ghost" disabled={pending} onClick={() => run("DISMISSED")}>Dismiss</button>
+        <button className="btn-ghost text-clay-dark" disabled={pending} onClick={() => startTransition(async () => {
+          await archiveReportAction(id, !archived);
+          router.refresh();
+        })}>{archived ? "Restore from archive" : "Archive case"}</button>
       </div>
     </div>
   );
