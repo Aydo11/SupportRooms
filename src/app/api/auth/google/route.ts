@@ -1,0 +1,45 @@
+import { createHash, randomBytes } from "crypto";
+import { NextRequest, NextResponse } from "next/server";
+import { callerIp, LIMITS, rateLimit } from "@/lib/rate-limit";
+
+export const runtime = "nodejs";
+
+export async function GET(request: NextRequest) {
+  const limited = await rateLimit(`oauth:${await callerIp()}`, LIMITS.oauth);
+  if (!limited.ok) return NextResponse.redirect(new URL("/login?oauth=failed", request.url));
+
+  const clientId = process.env.GOOGLE_CLIENT_ID;
+  const appUrl = process.env.APP_URL;
+  if (!clientId || !process.env.GOOGLE_CLIENT_SECRET || !appUrl) {
+    return NextResponse.redirect(new URL("/login?oauth=failed", request.url));
+  }
+
+  const state = randomBytes(24).toString("base64url");
+  const verifier = randomBytes(48).toString("base64url");
+  const challenge = createHash("sha256").update(verifier).digest("base64url");
+  const next = safeRedirect(request.nextUrl.searchParams.get("next") ?? "", "");
+  const redirectUri = `${appUrl.replace(/\/$/, "")}/api/auth/google/callback`;
+  const url = new URL("https://accounts.google.com/o/oauth2/v2/auth");
+  url.search = new URLSearchParams({
+    client_id: clientId,
+    redirect_uri: redirectUri,
+    response_type: "code",
+    scope: "openid email profile",
+    state,
+    code_challenge: challenge,
+    code_challenge_method: "S256",
+    prompt: "select_account",
+  }).toString();
+
+  const response = NextResponse.redirect(url);
+  const options = { httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "lax" as const, maxAge: 600, path: "/api/auth/google" };
+  response.cookies.set("sr_oauth_state", state, options);
+  response.cookies.set("sr_oauth_verifier", verifier, options);
+  response.cookies.set("sr_oauth_next", next, options);
+  return response;
+}
+
+function safeRedirect(target: string, fallback: string) {
+  if (!target.startsWith("/") || target.startsWith("//") || target.startsWith("/\\")) return fallback;
+  return target;
+}
