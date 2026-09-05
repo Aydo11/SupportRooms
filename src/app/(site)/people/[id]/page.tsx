@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { hasAdminPermission } from "@/lib/admin-permissions";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/session";
 import { MessageProviderForm } from "@/components/message-provider-form";
@@ -31,7 +32,7 @@ export default async function LookingForAdPage({ params }: { params: Promise<{ i
   if (!ad || ad.user.status !== "ACTIVE") notFound();
 
   const isOwner = user?.id === ad.userId;
-  if (!isOwner && (ad.status !== "ACTIVE" || !ad.user.profile?.discoverable) && user?.role !== "ADMIN") notFound();
+  if (!isOwner && (ad.status !== "ACTIVE" || !ad.user.profile?.discoverable) && !hasAdminPermission(user)) notFound();
 
   if (!isOwner) await db.lookingForAd.update({ where: { id: ad.id }, data: { views: { increment: 1 } } });
 

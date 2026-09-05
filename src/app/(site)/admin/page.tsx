@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { hasAdminPermission } from "@/lib/admin-permissions";
 import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/rbac";
 import { DashboardShell, StatCard } from "@/components/dashboard-shell";
@@ -9,7 +11,8 @@ export const metadata = { title: "Admin" };
 export const dynamic = "force-dynamic";
 
 export default async function AdminHome() {
-  await requireAdmin();
+  const admin = await requireAdmin("MODERATION");
+  if (!hasAdminPermission(admin)) redirect("/admin/reports");
   const nav = await adminNav();
 
   const [users, companies, live, pending, rooms, available, requests, referrals, reports, recent] =

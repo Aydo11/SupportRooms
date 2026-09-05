@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { hasAdminPermission } from "@/lib/admin-permissions";
 import { db } from "@/lib/db";
 import { getCurrentUser } from "@/lib/session";
 import { audit } from "@/lib/audit";
@@ -31,7 +32,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
 
   const companyIds = new Set(user.staffOf.map((s) => s.companyId));
   const allowed =
-    user.role === "ADMIN" ||
+    hasAdminPermission(user) ||
     document.ownerId === user.id ||
     (document.companyId && companyIds.has(document.companyId)) ||
     document.referral?.referrerId === user.id ||

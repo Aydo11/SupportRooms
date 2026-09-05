@@ -8,7 +8,7 @@ import { notify, notifyCompany } from "@/lib/notify";
 import type { ReportStatus } from "@prisma/client";
 
 export async function approveListingAction(listingId: string) {
-  const admin = await requireAdmin();
+  const admin = await requireAdmin("MODERATION");
   const listing = await db.listing.update({
     where: { id: listingId },
     data: { status: "ACTIVE", publishedAt: new Date(), rejectionNote: null },
@@ -25,7 +25,7 @@ export async function approveListingAction(listingId: string) {
 }
 
 export async function rejectListingAction(listingId: string, note: string) {
-  const admin = await requireAdmin();
+  const admin = await requireAdmin("MODERATION");
   const listing = await db.listing.update({
     where: { id: listingId },
     data: { status: "REJECTED", rejectionNote: note },
@@ -92,6 +92,9 @@ export async function reviewVerificationAction(requestId: string, approve: boole
 
 export async function setUserStatusAction(userId: string, status: "ACTIVE" | "SUSPENDED") {
   const admin = await requireAdmin();
+  const target = await db.user.findUnique({ where: { id: userId }, select: { role: true } });
+  // Admin access is managed on the team page, with reauthentication and self-lockout protection.
+  if (!target || target.role === "ADMIN") return;
   await db.user.update({
     where: { id: userId },
     // Suspending also invalidates every existing session, so a suspended user is
@@ -125,7 +128,7 @@ export async function setCompanyStatusAction(companyId: string, status: "ACTIVE"
 }
 
 export async function resolveReportAction(reportId: string, status: ReportStatus, resolution?: string) {
-  const admin = await requireAdmin();
+  const admin = await requireAdmin("MODERATION");
   await db.report.update({ where: { id: reportId }, data: { status, resolution: resolution ?? null } });
   await audit({ actorId: admin.id, action: "admin.report_resolved", targetType: "Report", targetId: reportId, metadata: { status } });
   revalidatePath("/admin/reports");

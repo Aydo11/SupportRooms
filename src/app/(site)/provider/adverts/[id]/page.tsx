@@ -53,19 +53,20 @@ export default async function ProviderAdvertPage({ params }: { params: Promise<{
         ) : null
       }
     >
-      <div className="card flex flex-wrap items-center justify-between gap-4 p-4">
-        <div className="flex flex-wrap items-center gap-2">
+      <section aria-label="Manage advert" className="card overflow-hidden">
+        <div className="flex flex-wrap items-center gap-2 border-b border-line bg-paper-sunk/50 px-5 py-3">
+          <span className="mr-2 text-[13px] font-medium text-ink-soft">Advert status</span>
           <StatusPill
             status={LISTING_STATUSES[listing.status]}
             tone={listing.status === "ACTIVE" ? "good" : listing.status === "PENDING_REVIEW" ? "warn" : "muted"}
           />
-          {listing.featured && <FeaturedBadge />}
-          {listing.featuredUntil && (
+          {listing.featured && (!listing.featuredUntil || listing.featuredUntil > new Date()) && <FeaturedBadge />}
+          {listing.featured && listing.featuredUntil && listing.featuredUntil > new Date() && (
             <span className="text-[13px] text-ink-soft">Promoted until {shortDate(listing.featuredUntil)}</span>
           )}
         </div>
-        <ListingRowActions id={listing.id} status={listing.status} />
-      </div>
+        <div className="p-4 sm:px-5"><ListingRowActions id={listing.id} status={listing.status} /></div>
+      </section>
 
       {listing.status === "REJECTED" && listing.rejectionNote && (
         <p className="card mt-4 border-clay/30 p-4 text-[15px] text-clay-dark">

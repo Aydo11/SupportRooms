@@ -18,7 +18,7 @@ const TARGET_PATHS: Record<string, (id: string) => string | null> = {
 };
 
 export default async function AdminReportsPage() {
-  await requireAdmin();
+  await requireAdmin("MODERATION");
   const [nav, reports] = await Promise.all([
     adminNav(),
     db.report.findMany({

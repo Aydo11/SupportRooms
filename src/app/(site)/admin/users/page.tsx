@@ -58,7 +58,7 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: P
               </td>
               <td className="px-4 py-3 text-ink-soft">{shortDate(user.createdAt)}</td>
               <td className="px-4 py-3 text-right">
-                {!user.deletedAt && <AccountToggle kind="user" id={user.id} status={user.status} />}
+                {!user.deletedAt && user.role !== "ADMIN" && <AccountToggle kind="user" id={user.id} status={user.status} />}
               </td>
             </tr>
           ))}

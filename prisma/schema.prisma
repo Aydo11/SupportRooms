@@ -233,6 +233,7 @@ model User {
   email             String        @unique
   passwordHash      String
   role              Role          @default(USER)
+  adminPermissions  String[]      @default(["ALL"])
   status            AccountStatus @default(ACTIVE)
   firstName         String
   lastName          String

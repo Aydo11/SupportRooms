@@ -23,7 +23,7 @@ const TABS: { value: string; label: string }[] = [
 ];
 
 export default async function AdminListingsPage({ searchParams }: { searchParams: Promise<{ status?: string }> }) {
-  await requireAdmin();
+  await requireAdmin("MODERATION");
   const query = await searchParams;
   const status = (query.status ?? "PENDING_REVIEW") as ListingStatus;
   const [nav, listings] = await Promise.all([

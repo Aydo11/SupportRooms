@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { hasAdminPermission } from "@/lib/admin-permissions";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { requireUser } from "@/lib/rbac";
@@ -28,7 +29,7 @@ export default async function ReferralPage({ params }: { params: Promise<{ id: s
   const isProvider = referral.listing
     ? user.staffOf.some((s) => s.companyId === referral.listing!.companyId)
     : false;
-  if (!isReferrer && !isProvider && user.role !== "ADMIN") notFound();
+  if (!isReferrer && !isProvider && !hasAdminPermission(user)) notFound();
 
   const nav = await referrerNav(user.id);
   const open = !["MOVED_IN", "DECLINED", "WITHDRAWN"].includes(referral.status);

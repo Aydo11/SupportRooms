@@ -5,7 +5,11 @@
  * inline bootstrap. Tighten it with a nonce when you add a CSP reporting
  * endpoint — the shape is here to be tightened, not to be assumed sufficient.
  */
+import { withSentryConfig } from "@sentry/nextjs/config";
+import { fileURLToPath } from "node:url";
 const isDev = process.env.NODE_ENV !== "production";
+let sentryOrigin = "";
+try { sentryOrigin = new URL(process.env.NEXT_PUBLIC_SENTRY_DSN || "").origin; } catch {}
 
 const csp = [
   "default-src 'self'",
@@ -15,7 +19,7 @@ const csp = [
   "font-src 'self' https://fonts.gstatic.com data:",
   // Map tiles and uploaded images.
   "img-src 'self' data: blob: https: https://tile.openstreetmap.org https://*.tile.openstreetmap.org",
-  "connect-src 'self' https://api.postcodes.io https://tile.openstreetmap.org https://*.tile.openstreetmap.org",
+  `connect-src 'self' https://api.postcodes.io https://tile.openstreetmap.org https://*.tile.openstreetmap.org ${sentryOrigin}`,
   // Only the video embeds the gallery actually builds.
   "frame-src https://www.youtube.com https://player.vimeo.com",
   "media-src 'self' blob: https:",
@@ -46,19 +50,19 @@ const securityHeaders = [
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  turbopack: { root: fileURLToPath(new URL(".", import.meta.url)) },
   poweredByHeader: false,
   images: {
     // Deliberately narrow. Widen it to the hosts you actually serve images from.
     remotePatterns: [{ protocol: "https", hostname: "**.amazonaws.com" }],
   },
-  // Stable top-level config as of Next 15+ (Next 16 warns/ignores this under
-  // `experimental`, which silently drops the origin allow-list — the kind of
-  // thing that looks like "server actions randomly fail in production").
+  experimental: {
   serverActions: {
     bodySizeLimit: "25mb",
     // Server Actions are rejected unless the Origin matches. In production set
     // APP_URL so this is the real host rather than whatever the proxy claims.
     allowedOrigins: process.env.APP_URL ? [new URL(process.env.APP_URL).host] : undefined,
+  },
   },
   async headers() {
     return [
@@ -72,4 +76,9 @@ const nextConfig = {
   },
 };
 
-export default nextConfig;
+export default withSentryConfig(nextConfig, {
+  silent: true,
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+  sourcemaps: { disable: !process.env.SENTRY_AUTH_TOKEN },
+});

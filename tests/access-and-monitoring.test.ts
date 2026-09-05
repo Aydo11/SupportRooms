@@ -1,0 +1,38 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { hasAdminPermission } from "../src/lib/admin-permissions";
+import { sanitiseError } from "../src/lib/sentry-options";
+
+test("non-admins cannot gain access from the default permissions field", () => {
+  for (const role of ["USER", "PROVIDER", "REFERRER"]) {
+    assert.equal(hasAdminPermission({ role, adminPermissions: ["ALL"] }), false);
+    assert.equal(hasAdminPermission({ role, adminPermissions: ["ALL"] }, "MODERATION"), false);
+  }
+  assert.equal(hasAdminPermission(null), false);
+});
+test("moderators have no full administrator access", () => {
+  const moderator = { role: "ADMIN", adminPermissions: ["MODERATION"] };
+  assert.equal(hasAdminPermission(moderator), false);
+  assert.equal(hasAdminPermission(moderator, "MODERATION"), true);
+  assert.equal(hasAdminPermission({ role: "ADMIN", adminPermissions: [] }), false);
+});
+test("full administrators retain moderation access", () => {
+  const admin = { role: "ADMIN", adminPermissions: ["ALL"] };
+  assert.equal(hasAdminPermission(admin), true);
+  assert.equal(hasAdminPermission(admin, "MODERATION"), true);
+});
+test("error monitoring strips submitted data and identity", () => {
+  const event = sanitiseError({
+    type: undefined,
+    user: { email: "private@example.com" }, request: { data: "private record" },
+    breadcrumbs: [{ message: "private message" }], extra: { password: "secret" },
+    contexts: { privateRecord: { name: "Private" } }, message: "Private error",
+    exception: { values: [{ type: "Error", value: "Query containing private data", stacktrace: {
+      frames: [{ filename: "https://example.com/app.js?token=private", vars: { name: "Private" } }],
+    } }] },
+  });
+  for (const key of ["user", "request", "breadcrumbs", "extra", "contexts", "message"]) assert.equal(key in event, false);
+  assert.equal(event.exception?.values?.[0].value, "Application error (message redacted)");
+  assert.equal(event.exception?.values?.[0].stacktrace?.frames?.[0].filename, "https://example.com/app.js");
+  assert.equal(event.exception?.values?.[0].stacktrace?.frames?.[0].vars, undefined);
+});

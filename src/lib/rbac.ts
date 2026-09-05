@@ -2,6 +2,7 @@ import "server-only";
 import { redirect } from "next/navigation";
 import { db } from "./db";
 import { getCurrentUser, type CurrentUser } from "./session";
+import { hasAdminPermission, type AdminPermission } from "./admin-permissions";
 
 export class AuthorisationError extends Error {
   constructor(message = "You do not have access to this.") {
@@ -16,15 +17,15 @@ export async function requireUser(next?: string): Promise<CurrentUser> {
   return user;
 }
 
-export async function requireAdmin(): Promise<CurrentUser> {
+export async function requireAdmin(permission: AdminPermission = "ALL"): Promise<CurrentUser> {
   const user = await requireUser("/admin");
-  if (user.role !== "ADMIN") throw new AuthorisationError();
+  if (!hasAdminPermission(user, permission)) throw new AuthorisationError();
   return user;
 }
 
 export async function requireReferrer(): Promise<CurrentUser> {
   const user = await requireUser("/referrals");
-  if (user.role !== "REFERRER" && user.role !== "ADMIN") {
+  if (user.role !== "REFERRER" && !hasAdminPermission(user)) {
     throw new AuthorisationError("Referrals can only be made by professional accounts.");
   }
   return user;
@@ -43,7 +44,7 @@ export async function requireCompany(): Promise<{ user: CurrentUser; companyId: 
 
 /** True when the user is staff at the company (or an admin). */
 export function canActForCompany(user: CurrentUser, companyId: string) {
-  return user.role === "ADMIN" || user.staffOf.some((s) => s.companyId === companyId);
+  return hasAdminPermission(user) || user.staffOf.some((s) => s.companyId === companyId);
 }
 
 export async function assertCompanyAccess(user: CurrentUser, companyId: string) {
@@ -83,7 +84,7 @@ export async function assertReferralAccess(user: CurrentUser, referralId: string
   if (!referral) throw new AuthorisationError("Referral not found.");
   const isReferrer = referral.referrerId === user.id;
   const isReceivingCompany = referral.listing ? canActForCompany(user, referral.listing.companyId) : false;
-  if (!isReferrer && !isReceivingCompany && user.role !== "ADMIN") {
+  if (!isReferrer && !isReceivingCompany && !hasAdminPermission(user)) {
     throw new AuthorisationError("Referral not found.");
   }
   return referral;
@@ -97,7 +98,7 @@ export async function assertRequestAccess(user: CurrentUser, requestId: string) 
   if (!request) throw new AuthorisationError("Request not found.");
   const isApplicant = request.applicantId === user.id;
   const isProvider = canActForCompany(user, request.listing.companyId);
-  if (!isApplicant && !isProvider && user.role !== "ADMIN") {
+  if (!isApplicant && !isProvider && !hasAdminPermission(user)) {
     throw new AuthorisationError("Request not found.");
   }
   return request;
@@ -116,7 +117,7 @@ export async function assertClientAccess(user: CurrentUser, clientId: string) {
   if (!client) throw new AuthorisationError("Client not found.");
   const isOwner = client.referrerId === user.id;
   const isSharedWith = client.shares.some((share) => canActForCompany(user, share.companyId));
-  if (!isOwner && !isSharedWith && user.role !== "ADMIN") {
+  if (!isOwner && !isSharedWith && !hasAdminPermission(user)) {
     throw new AuthorisationError("Client not found.");
   }
   return client;

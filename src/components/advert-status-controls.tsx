@@ -1,6 +1,7 @@
 "use client";
 
 import { useTransition } from "react";
+import { toast } from "./toast";
 import { setListingStatusAction, submitListingAction } from "@/server/actions/listings";
 
 export function AdvertStatusControls({
@@ -13,6 +14,12 @@ export function AdvertStatusControls({
   mediaCount: number;
 }) {
   const [pending, startTransition] = useTransition();
+  function changeStatus(next: "PAUSED" | "ACTIVE" | "ARCHIVED") {
+    startTransition(async () => {
+      const result = await setListingStatusAction(listingId, next);
+      (result.ok ? toast.success : toast.error)(result.message);
+    });
+  }
 
   return (
     <div className="card flex flex-wrap items-center justify-between gap-4 p-5">
@@ -49,7 +56,7 @@ export function AdvertStatusControls({
           <button
             className="btn-secondary"
             disabled={pending}
-            onClick={() => startTransition(() => setListingStatusAction(listingId, "PAUSED"))}
+            onClick={() => changeStatus("PAUSED")}
           >
             Pause advert
           </button>
@@ -58,7 +65,7 @@ export function AdvertStatusControls({
           <button
             className="btn-primary"
             disabled={pending}
-            onClick={() => startTransition(() => setListingStatusAction(listingId, "ACTIVE"))}
+            onClick={() => changeStatus("ACTIVE")}
           >
             Make live again
           </button>
@@ -67,7 +74,7 @@ export function AdvertStatusControls({
           <button
             className="btn-ghost"
             disabled={pending}
-            onClick={() => startTransition(() => setListingStatusAction(listingId, "ARCHIVED"))}
+            onClick={() => changeStatus("ARCHIVED")}
           >
             Archive
           </button>

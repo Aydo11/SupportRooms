@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { MobileMenu } from "./mobile-menu";
 import { brand } from "@/brand.config";
 import { getCurrentUser } from "@/lib/session";
 import { db } from "@/lib/db";
@@ -51,11 +52,7 @@ export async function SiteHeader() {
             </>
           )}
 
-          <details className="group relative lg:hidden">
-            <summary className="grid h-11 w-11 cursor-pointer list-none place-items-center rounded-[10px] border border-line bg-white text-xl text-ink marker:hidden" aria-label="Open navigation menu">
-              <span aria-hidden="true">☰</span>
-            </summary>
-            <div className="absolute right-0 top-12 z-50 w-[min(19rem,calc(100vw-2rem))] rounded-card border border-line bg-white p-2 shadow-float">
+          <MobileMenu>
               <MobileLink href="/search">Search accommodation</MobileLink>
               <MobileLink href="/how-it-works">How it works</MobileLink>
               <MobileLink href="/people">People looking</MobileLink>
@@ -75,8 +72,7 @@ export async function SiteHeader() {
                   <MobileLink href="/register">Create account</MobileLink>
                 </>
               )}
-            </div>
-          </details>
+          </MobileMenu>
         </div>
       </div>
     </header>
