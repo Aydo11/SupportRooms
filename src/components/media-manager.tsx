@@ -12,15 +12,18 @@ import {
 } from "@/server/actions/listings";
 import { Field, FormError, FormSuccess, SubmitButton } from "./ui";
 import { clsx } from "@/lib/clsx";
+import { demoListingImage } from "@/lib/demo-listings";
+import { ResilientImage } from "./resilient-image";
 
 type Item = { id: string; url: string; type: string; caption: string | null; roomId: string | null; isPrimary: boolean };
 type Room = { id: string; name: string };
 
-export function MediaManager({ listingId, status, media, rooms }: {
+export function MediaManager({ listingId, status, media, rooms, permanentStorage }: {
   listingId: string;
   status: string;
   media: Item[];
   rooms: Room[];
+  permanentStorage: boolean;
 }) {
   const [state, action] = useFormState(uploadListingMediaAction, { ok: false });
   const [items, setItems] = useState(media);
@@ -67,6 +70,13 @@ export function MediaManager({ listingId, status, media, rooms }: {
         <FormError message={state.errors?.form} />
         <FormSuccess message={state.ok ? state.message : undefined} />
 
+        {!permanentStorage && (
+          <div className="rounded-[10px] border border-amber-300 bg-amber-50 px-4 py-3 text-[13px] leading-relaxed text-amber-950">
+            <strong className="font-semibold">Temporary photo storage is active.</strong>{" "}
+            Photos can disappear when Render restarts or redeploys. Illustrative images will be shown instead until permanent object storage is connected.
+          </div>
+        )}
+
         <div className="grid gap-4 md:grid-cols-2">
           <Field label="Add photos or a short video" name="files" hint="Up to 12 files. Photos: 8MB each. Video: 20MB." error={state.errors?.files}>
             <input id="files" name="files" type="file" accept="image/jpeg,image/png,image/webp,image/avif,video/mp4,video/quicktime,video/webm" multiple className="field file:mr-3 file:rounded-md file:border-0 file:bg-pine-light file:px-3 file:py-1.5 file:text-pine-dark" />
@@ -93,8 +103,13 @@ export function MediaManager({ listingId, status, media, rooms }: {
             <li key={item.id} draggable onDragStart={() => setDragging(item.id)} onDragEnd={() => setDragging(null)} onDragOver={(event) => event.preventDefault()} onDrop={() => dragging && move(dragging, item.id)} className={clsx("card overflow-hidden", item.isPrimary && "ring-2 ring-pine", dragging === item.id && "opacity-60")}>
               <div className="relative aspect-[4/3] bg-paper-sunk">
                 {item.type === "IMAGE" ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={item.url} alt={item.caption ?? "Property photo"} className="h-full w-full object-cover" />
+                  <ResilientImage
+                    src={item.url}
+                    fallbackSrc={demoListingImage(listingId, index).url}
+                    fallbackLabel="Photo unavailable"
+                    alt={item.caption ?? "Property photo"}
+                    className="h-full w-full object-cover"
+                  />
                 ) : item.type === "VIDEO" ? (
                   <video src={item.url} controls playsInline preload="metadata" className="h-full w-full bg-black object-contain" />
                 ) : (
@@ -140,7 +155,7 @@ export function MediaManager({ listingId, status, media, rooms }: {
       ) : (
         <div className="card border-dashed p-8 text-center">
           <p className="text-[16px] text-ink">Add clear photos of the outside, shared spaces and each room.</p>
-          <p className="mt-1 text-[14px] text-ink-faint">The first photo becomes the search card image.</p>
+          <p className="mt-1 text-[14px] text-ink-faint">The first photo becomes the search card image. Until then, the public advert uses a clearly labelled illustrative image.</p>
         </div>
       )}
 

@@ -41,6 +41,7 @@ export default async function MediaPage({ params }: { params: Promise<{ id: stri
           isPrimary: item.isPrimary,
         }))}
         rooms={listing.rooms}
+        permanentStorage={process.env.STORAGE_DRIVER === "s3"}
       />
     </DashboardShell>
   );

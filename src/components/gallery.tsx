@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { demoListingGallery, demoListingImage } from "@/lib/demo-listings";
+import { ResilientImage } from "./resilient-image";
 
 type Media = {
   id: string;
@@ -8,20 +10,15 @@ type Media = {
   url: string;
   caption: string | null;
   room?: { id: string; name: string } | null;
+  illustrative?: boolean;
 };
 
-export function Gallery({ media, title }: { media: Media[]; title: string }) {
+export function Gallery({ media, title, listingId }: { media: Media[]; title: string; listingId: string }) {
   const [active, setActive] = useState(0);
-
-  if (!media.length) {
-    return (
-      <div className="grid aspect-[16/9] place-items-center rounded-card border border-line bg-paper-sunk text-[15px] text-ink-faint">
-        The provider hasn&apos;t added photos yet
-      </div>
-    );
-  }
-
-  const current = media[Math.min(active, media.length - 1)];
+  const displayMedia: Media[] = media.length ? media : demoListingGallery(listingId);
+  const currentIndex = Math.min(active, displayMedia.length - 1);
+  const current = displayMedia[currentIndex];
+  const fallback = demoListingImage(listingId, currentIndex);
 
   return (
     <div aria-label="Property media gallery">
@@ -39,18 +36,29 @@ export function Gallery({ media, title }: { media: Media[]; title: string }) {
             />
           </div>
         ) : (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={current.url} alt={current.caption ?? title} className="aspect-video w-full object-cover" />
+          <ResilientImage
+            src={current.url}
+            fallbackSrc={fallback.url}
+            fallbackLabel={current.illustrative ? undefined : "Photo unavailable — illustrative image shown"}
+            alt={current.caption ?? title}
+            className="aspect-video w-full object-cover"
+          />
         )}
 
-        {media.length > 1 && (
+        {current.illustrative && (
+          <span className="absolute bottom-2 left-2 rounded-pill bg-black/70 px-2.5 py-1 text-[11px] font-medium text-white backdrop-blur">
+            Illustrative image
+          </span>
+        )}
+
+        {displayMedia.length > 1 && (
           <>
-            <button type="button" onClick={() => setActive((active - 1 + media.length) % media.length)} aria-label="Previous photo or video" className="absolute left-2 top-1/2 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full bg-black/65 text-xl text-white backdrop-blur hover:bg-black/80 sm:left-4">←</button>
-            <button type="button" onClick={() => setActive((active + 1) % media.length)} aria-label="Next photo or video" className="absolute right-2 top-1/2 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full bg-black/65 text-xl text-white backdrop-blur hover:bg-black/80 sm:right-4">→</button>
+            <button type="button" onClick={() => setActive((active - 1 + displayMedia.length) % displayMedia.length)} aria-label="Previous photo or video" className="absolute left-2 top-1/2 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full bg-black/65 text-xl text-white backdrop-blur hover:bg-black/80 sm:left-4">←</button>
+            <button type="button" onClick={() => setActive((active + 1) % displayMedia.length)} aria-label="Next photo or video" className="absolute right-2 top-1/2 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full bg-black/65 text-xl text-white backdrop-blur hover:bg-black/80 sm:right-4">→</button>
           </>
         )}
         <span className="absolute right-3 top-3 rounded-pill bg-black/70 px-2.5 py-1 text-[12px] font-medium text-white">
-          {active + 1} / {media.length}
+          {currentIndex + 1} / {displayMedia.length}
         </span>
       </div>
 
@@ -61,9 +69,9 @@ export function Gallery({ media, title }: { media: Media[]; title: string }) {
         </div>
       )}
 
-      {media.length > 1 && (
+      {displayMedia.length > 1 && (
         <ul className="mt-3 flex gap-2 overflow-x-auto pb-1">
-          {media.map((item, index) => (
+          {displayMedia.map((item, index) => (
             <li key={item.id}>
               <button
                 onClick={() => setActive(index)}
@@ -76,8 +84,13 @@ export function Gallery({ media, title }: { media: Media[]; title: string }) {
                 {item.type.startsWith("VIDEO") ? (
                   <span className="grid h-full w-full place-items-center bg-ink text-[12px] text-white">Video</span>
                 ) : (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={item.url} alt="" className="h-full w-full object-cover" />
+                  <ResilientImage
+                    src={item.url}
+                    fallbackSrc={demoListingImage(listingId, index).url}
+                    alt=""
+                    className="h-full w-full object-cover"
+                    loading="lazy"
+                  />
                 )}
               </button>
             </li>

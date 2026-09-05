@@ -3,6 +3,8 @@ import { FeaturedBadge, MatchScore, RoomStrip, VerifiedBadge } from "./badges";
 import { monthYear, publicLocation, rentRange } from "@/lib/format";
 import { supportLabel, ACCOMMODATION_TYPES } from "@/lib/taxonomy";
 import type { SearchResult } from "@/server/search";
+import { demoListingImage } from "@/lib/demo-listings";
+import { ResilientImage } from "./resilient-image";
 
 export function ListingCard({
   listing,
@@ -19,20 +21,21 @@ export function ListingCard({
   distance?: number | null;
 }) {
   const image = listing.media[0]?.url;
+  const fallback = demoListingImage(listing.id);
   const href = sponsored ? `/listings/${listing.id}?ref=sponsored` : `/listings/${listing.id}`;
   const available = listing.rooms.filter((r) => r.status === "AVAILABLE").length;
 
   return (
     <Link href={href} className="card interactive-card group block overflow-hidden">
         <div className="relative aspect-[16/10] bg-paper-sunk">
-          {image ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={image} alt="" className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.035]" loading="lazy" />
-          ) : (
-            <div className="flex h-full items-center justify-center text-[13px] text-ink-faint">
-              No photo yet
-            </div>
-          )}
+          <ResilientImage
+            src={image}
+            fallbackSrc={fallback.url}
+            fallbackLabel="Illustrative image"
+            alt={image ? `${listing.title} property photo` : fallback.caption}
+            className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.035]"
+            loading="lazy"
+          />
           <div className="absolute left-3 top-3 flex gap-2">
             {(sponsored || listing.featured) && <FeaturedBadge />}
             {available > 0 && (

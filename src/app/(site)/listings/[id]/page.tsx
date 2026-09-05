@@ -114,7 +114,7 @@ export default async function ListingPage({
 
       <div className="grid gap-8 lg:grid-cols-[1fr_340px]">
         <div>
-          <Gallery media={listing.media} title={listing.title} />
+          <Gallery media={listing.media} title={listing.title} listingId={listing.id} />
 
           <header className="mt-7">
             <div className="flex flex-wrap items-start justify-between gap-3">
