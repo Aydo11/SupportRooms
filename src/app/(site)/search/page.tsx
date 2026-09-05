@@ -11,7 +11,7 @@ import { searchFacets, searchListings, searchMapPins, type SearchParams } from "
 import { getCurrentUser } from "@/lib/session";
 import { matchScore } from "@/lib/matching";
 
-export const metadata = { title: "Search supported accommodation" };
+export const metadata = { title: "Search housing and accommodation" };
 export const dynamic = "force-dynamic";
 
 export default async function SearchPage({
