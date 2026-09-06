@@ -2,16 +2,23 @@ import { clsx } from "@/lib/clsx";
 import { brand } from "@/brand.config";
 
 /** Verification is a checked-identity marker, never a regulatory claim. */
-export function VerifiedBadge({ what = "provider" }: { what?: "provider" | "property" }) {
+export function VerifiedBadge({
+  what = "provider",
+  compact = false,
+}: {
+  what?: "provider" | "property";
+  compact?: boolean;
+}) {
   return (
     <span
-      className="inline-flex items-center gap-1 rounded-pill bg-pine-light px-2.5 py-1 text-[12px] font-medium text-pine-dark"
+      className="inline-flex shrink-0 items-center gap-1 rounded-pill bg-pine-light px-2.5 py-1 text-[12px] font-medium text-pine-dark"
       title={brand.trustNote}
+      aria-label={`Verified ${what}`}
     >
       <svg viewBox="0 0 16 16" className="h-3.5 w-3.5" aria-hidden="true" fill="currentColor">
         <path d="M8 0 9.9 1.4l2.3-.2.7 2.2 1.9 1.3-.9 2.2.9 2.2-1.9 1.3-.7 2.2-2.3-.2L8 14l-1.9-1.4-2.3.2-.7-2.2L1.2 9.3l.9-2.2-.9-2.2 1.9-1.3.7-2.2 2.3.2L8 0Zm3.2 5.3-.9-.9-3.4 3.4-1.5-1.5-.9.9 2.4 2.4 4.3-4.3Z" />
       </svg>
-      Verified {what}
+      {compact ? "Verified" : `Verified ${what}`}
     </span>
   );
 }
