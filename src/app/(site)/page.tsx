@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Suspense } from "react";
 import { db } from "@/lib/db";
 import { brand } from "@/brand.config";
@@ -6,6 +7,24 @@ import { SearchPanel } from "@/components/search-panel";
 import { ListingCard } from "@/components/listing-card";
 import { searchListings } from "@/server/search";
 import { SUPPORT_TYPES } from "@/lib/taxonomy";
+
+const POPULAR_LOCATIONS = [
+  {
+    name: "Birmingham",
+    description: "HMOs, supported housing and shared homes",
+    image: "/locations/birmingham.webp",
+  },
+  {
+    name: "Manchester",
+    description: "Supported, transitional and specialist housing",
+    image: "/locations/manchester.webp",
+  },
+  {
+    name: "London",
+    description: "Shared homes and accommodation across the capital",
+    image: "/locations/london.webp",
+  },
+] as const;
 
 export const dynamic = "force-dynamic";
 
@@ -66,6 +85,45 @@ export default async function HomePage() {
           cta="Advertise accommodation"
           tone="ink"
         />
+      </section>
+
+      <section className="shell pb-10 sm:pb-14">
+        <div className="flex items-end justify-between gap-4">
+          <div>
+            <span className="text-[13px] font-semibold tracking-[0.08em] text-pine-dark">POPULAR LOCATIONS</span>
+            <h2 className="mt-2 text-[30px]">Explore housing by city</h2>
+            <p className="mt-1 max-w-[54ch] text-[15px] leading-relaxed text-ink-soft">
+              Start with some of the UK areas people search most often.
+            </p>
+          </div>
+          <Link href="/search" className="btn-secondary hidden shrink-0 sm:inline-flex">View all locations</Link>
+        </div>
+
+        <div className="mt-6 grid gap-4 sm:grid-cols-3">
+          {POPULAR_LOCATIONS.map((location) => (
+            <Link
+              key={location.name}
+              href={`/search?where=${encodeURIComponent(location.name)}`}
+              className="group relative aspect-[16/10] overflow-hidden rounded-card border border-line bg-ink shadow-raise transition duration-300 hover:-translate-y-1 hover:border-pine focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-pine"
+              aria-label={`Search for housing in ${location.name}`}
+            >
+              <Image
+                src={location.image}
+                alt={`${location.name} city skyline`}
+                fill
+                sizes="(min-width: 1024px) 390px, (min-width: 640px) 33vw, 100vw"
+                className="object-cover transition duration-500 group-hover:scale-[1.04]"
+              />
+              <span aria-hidden="true" className="absolute inset-0 bg-gradient-to-t from-[#092d4d]/95 via-[#0f5d98]/20 to-transparent" />
+              <span className="absolute inset-x-0 bottom-0 block p-5 text-white">
+                <span className="block text-[22px] font-bold leading-tight">{location.name}</span>
+                <span className="mt-1 block text-[13px] leading-snug text-white/85">{location.description}</span>
+              </span>
+            </Link>
+          ))}
+        </div>
+
+        <Link href="/search" className="btn-secondary mt-5 w-full sm:hidden">View all locations</Link>
       </section>
 
       {featured.items.length > 0 && (
