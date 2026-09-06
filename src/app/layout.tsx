@@ -20,10 +20,12 @@ const display = Newsreader({
 export const metadata: Metadata = {
   title: { default: `${brand.name} — ${brand.tagline}`, template: `%s · ${brand.name}` },
   description: brand.description,
+  applicationName: brand.name,
+  appleWebApp: { title: brand.shortName },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#152A3A",
+  themeColor: "#171F2E",
   width: "device-width",
   initialScale: 1,
 };
