@@ -5,13 +5,19 @@ import { callerIp, LIMITS, rateLimit } from "@/lib/rate-limit";
 export const runtime = "nodejs";
 
 export async function GET(request: NextRequest) {
+  // Render sits behind a proxy, so request.url reflects the internal
+  // container address (localhost) rather than the public domain. Every
+  // redirect here must be built from APP_URL, falling back to request.url
+  // only when APP_URL genuinely isn't configured.
+  const base = process.env.APP_URL || request.url;
+
   const limited = await rateLimit(`oauth:${await callerIp()}`, LIMITS.oauth);
-  if (!limited.ok) return NextResponse.redirect(new URL("/login?oauth=failed", request.url));
+  if (!limited.ok) return NextResponse.redirect(new URL("/login?oauth=failed", base));
 
   const clientId = process.env.GOOGLE_CLIENT_ID;
   const appUrl = process.env.APP_URL;
   if (!clientId || !process.env.GOOGLE_CLIENT_SECRET || !appUrl) {
-    return NextResponse.redirect(new URL("/login?oauth=failed", request.url));
+    return NextResponse.redirect(new URL("/login?oauth=failed", base));
   }
 
   const state = randomBytes(24).toString("base64url");
