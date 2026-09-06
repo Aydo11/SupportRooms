@@ -25,7 +25,8 @@ export async function SiteHeader() {
           <Link href="/search" className="transition-colors hover:text-ink">Search accommodation</Link>
           <Link href="/how-it-works" className="transition-colors hover:text-ink">How it works</Link>
           <Link href="/people" className="transition-colors hover:text-ink">People looking</Link>
-          <Link href="/pricing" className="transition-colors hover:text-ink">Advertise</Link>
+          <Link href="/register?type=PROVIDER" className="transition-colors hover:text-ink">Advertise</Link>
+          <Link href="/pricing" className="transition-colors hover:text-ink">Membership</Link>
         </nav>
 
         <div className="ml-auto flex items-center gap-2">
@@ -55,7 +56,8 @@ export async function SiteHeader() {
               <MobileLink href="/search">Search accommodation</MobileLink>
               <MobileLink href="/how-it-works">How it works</MobileLink>
               <MobileLink href="/people">People looking</MobileLink>
-              <MobileLink href="/pricing">Advertise</MobileLink>
+              <MobileLink href="/register?type=PROVIDER">Advertise</MobileLink>
+              <MobileLink href="/pricing">Membership</MobileLink>
               <div className="my-2 border-t border-line" />
               {user ? (
                 <>
