@@ -40,7 +40,7 @@ export const MAX_PAGES = 40;
 export const MAP_PIN_LIMIT = 500;
 
 const LISTING_CARD_SELECT = {
-  company: { select: { id: true, name: true, slug: true, verification: true } },
+  company: { select: { id: true, name: true, slug: true, logoUrl: true, verification: true } },
   property: {
     select: {
       city: true, area: true, postcode: true, showExactAddress: true,
