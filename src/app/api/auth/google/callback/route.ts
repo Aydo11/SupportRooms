@@ -16,7 +16,12 @@ export async function GET(request: NextRequest) {
   const expectedState = request.cookies.get("sr_oauth_state")?.value;
   const verifier = request.cookies.get("sr_oauth_verifier")?.value;
   const next = safeRedirect(request.cookies.get("sr_oauth_next")?.value ?? "", "");
-  const fail = () => clearOAuthCookies(NextResponse.redirect(new URL("/login?oauth=failed", request.url)));
+  // Render sits behind a proxy, so request.url reflects the internal
+  // container address (localhost) rather than the public domain. Build
+  // failure redirects from APP_URL, falling back to request.url only when
+  // APP_URL genuinely isn't configured.
+  const base = process.env.APP_URL || request.url;
+  const fail = () => clearOAuthCookies(NextResponse.redirect(new URL("/login?oauth=failed", base)));
 
   if (!appUrl || !clientId || !clientSecret || !state || !code || !expectedState || state !== expectedState || !verifier) return fail();
 
@@ -40,7 +45,7 @@ export async function GET(request: NextRequest) {
     if (!email || payload.email_verified !== true) return fail();
 
     const user = await db.user.findUnique({ where: { email } });
-    if (!user) return clearOAuthCookies(NextResponse.redirect(new URL("/login?oauth=no-account", request.url)));
+    if (!user) return clearOAuthCookies(NextResponse.redirect(new URL("/login?oauth=no-account", base)));
     if (user.deletedAt || user.status !== "ACTIVE") return fail();
 
     await db.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date(), emailVerified: user.emailVerified ?? new Date() } });
