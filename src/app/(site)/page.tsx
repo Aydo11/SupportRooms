@@ -39,7 +39,7 @@ export default async function HomePage() {
   return (
     <>
       {/* Hero: the search is the product, so it leads. */}
-      <section className="surface-grid relative overflow-hidden border-b border-line bg-gradient-to-br from-white via-white to-pine-light/55">
+      <section className="surface-home relative overflow-hidden border-b border-line">
         <div aria-hidden="true" className="soft-orb absolute -left-32 top-0 h-[34rem] w-[34rem]" />
         <div aria-hidden="true" className="soft-orb absolute -right-44 bottom-[-16rem] h-[34rem] w-[34rem]" />
         <div className="shell relative grid gap-10 py-14 lg:grid-cols-[1.05fr_0.95fr] lg:py-20">

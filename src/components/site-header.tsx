@@ -16,12 +16,12 @@ export async function SiteHeader() {
 
   return (
     <header className="sticky top-0 z-40 border-b border-line/90 bg-paper/90 backdrop-blur-lg">
-      <div className="shell flex h-16 items-center gap-6">
+      <div className="shell flex h-16 items-center gap-4 xl:gap-6">
         <Link href="/" className="flex shrink-0 items-center" aria-label={`${brand.name} home`}>
           <Logo className="h-10 w-auto max-w-[158px] sm:h-11 sm:max-w-[180px]" />
         </Link>
 
-        <nav aria-label="Main navigation" className="hidden items-center gap-6 text-[15px] text-ink-soft lg:flex">
+        <nav aria-label="Main navigation" className="hidden items-center gap-5 whitespace-nowrap text-[14px] text-ink-soft xl:flex">
           <Link href="/search" className="transition-colors hover:text-ink">Search accommodation</Link>
           <Link href="/how-it-works" className="transition-colors hover:text-ink">How it works</Link>
           <Link href="/people" className="transition-colors hover:text-ink">People looking</Link>
@@ -32,8 +32,8 @@ export async function SiteHeader() {
         <div className="ml-auto flex items-center gap-2">
           {user ? (
             <>
-              <Link href="/messages" className="btn-ghost hidden sm:inline-flex">Messages</Link>
-              <Link href={`${home}`} className="btn-secondary hidden sm:inline-flex">
+              <Link href="/messages" className="btn-ghost hidden whitespace-nowrap xl:inline-flex">Messages</Link>
+              <Link href={`${home}`} className="btn-secondary hidden whitespace-nowrap xl:inline-flex">
                 Dashboard
                 {unread > 0 && (
                   <span className="ml-1 rounded-pill bg-pine px-1.5 py-0.5 text-[11px] font-semibold text-white">
@@ -42,13 +42,13 @@ export async function SiteHeader() {
                 )}
               </Link>
               <form action={logoutAction}>
-                <button className="btn-ghost hidden sm:inline-flex">Sign out</button>
+                <button className="btn-ghost hidden whitespace-nowrap xl:inline-flex">Sign out</button>
               </form>
             </>
           ) : (
             <>
-              <Link href="/login" className="btn-ghost hidden sm:inline-flex">Sign in</Link>
-              <Link href="/register" className="btn-primary hidden sm:inline-flex">Create account</Link>
+              <Link href="/login" className="btn-ghost hidden whitespace-nowrap xl:inline-flex">Sign in</Link>
+              <Link href="/register" className="btn-primary hidden whitespace-nowrap xl:inline-flex">Create account</Link>
             </>
           )}
 
