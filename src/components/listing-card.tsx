@@ -81,9 +81,13 @@ export function ListingCard({
           </p>
         )}
 
-        <div className="mt-4 flex items-center justify-between border-t border-line pt-3">
-          <RoomStrip rooms={listing.rooms} />
-          <span className="text-[15px] font-medium">{rentRange(listing.weeklyRentFrom, listing.weeklyRentTo)}</span>
+        <div className="mt-4 border-t border-line pt-3">
+          <div className="min-w-0 overflow-hidden">
+            <RoomStrip rooms={listing.rooms} />
+          </div>
+          <p className="mt-2 text-right text-[15px] font-medium leading-snug">
+            {rentRange(listing.weeklyRentFrom, listing.weeklyRentTo)}
+          </p>
         </div>
 
         <div className="mt-3 flex items-center justify-between gap-2">

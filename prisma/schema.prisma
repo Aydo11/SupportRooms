@@ -1,4 +1,4 @@
-// SupportRooms — UK supported accommodation marketplace
+// RoomsNow — UK housing and accommodation marketplace
 // Relational schema. PostgreSQL.
 
 generator client {

@@ -5,11 +5,13 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        ink: { DEFAULT: "#152A3A", soft: "#41576A", faint: "#7C8C99" },
-        paper: { DEFAULT: "#F4F6F3", card: "#FFFFFF", sunk: "#EAEEE9" },
-        pine: { DEFAULT: "#1F6F5C", dark: "#175243", light: "#E4F0EB" },
-        clay: { DEFAULT: "#9A5B1F", light: "#FBF0E2" },
-        line: { DEFAULT: "#DCE3DC", strong: "#C3CEC4" },
+        ink: { DEFAULT: "#171F2E", soft: "#445064", faint: "#758196" },
+        paper: { DEFAULT: "#F6F8FB", card: "#FFFFFF", sunk: "#EDF2F7" },
+        // Existing semantic class names are retained to keep the UI stable;
+        // these values are the RoomsNow accent-blue palette.
+        pine: { DEFAULT: "#1666AA", dark: "#0F4F87", light: "#E8F2FC" },
+        clay: { DEFAULT: "#A45512", light: "#FFF4E8" },
+        line: { DEFAULT: "#D9E2EC", strong: "#BAC7D5" },
       },
       fontFamily: {
         sans: ["var(--font-sans)", "system-ui", "sans-serif"],
@@ -17,8 +19,8 @@ const config: Config = {
       },
       borderRadius: { card: "14px", pill: "999px" },
       boxShadow: {
-        raise: "0 1px 2px rgba(21,42,58,.06), 0 8px 24px -12px rgba(21,42,58,.18)",
-        float: "0 18px 42px -24px rgba(21,42,58,.32), 0 4px 12px rgba(21,42,58,.08)",
+        raise: "0 1px 2px rgba(23,31,46,.06), 0 8px 24px -12px rgba(23,31,46,.18)",
+        float: "0 18px 42px -24px rgba(23,31,46,.32), 0 4px 12px rgba(23,31,46,.08)",
       },
       maxWidth: { shell: "1200px" },
       keyframes: {
