@@ -1,4 +1,4 @@
-# SupportRooms
+# RoomsNow
 
 A UK housing marketplace for HMOs, supported and transitional accommodation, adult social care housing, shared homes and self-contained properties: people looking for housing on one side,
 providers advertising rooms on the other, and professionals making referrals between them.
@@ -155,7 +155,7 @@ minutes to avoid a write on every refresh.
 
 ### Sign-in, password reset and payments
 
-- Google sign-in works for an existing SupportRooms account whose email is verified by Google.
+- Google sign-in works for an existing RoomsNow account whose email is verified by Google.
   Create OAuth web credentials, set `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`, and add
   `https://YOUR-DOMAIN/api/auth/google/callback` as an authorised redirect URI.
 - Forgotten-password links are hashed in the database, expire after one hour and can only be used
