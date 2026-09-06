@@ -47,6 +47,28 @@ export default async function SearchPage({
       }
     : null;
 
+  // The empty state is the most-viewed screen while the marketplace is filling
+  // up, so it points each audience at the thing that is actually useful to them
+  // rather than sending everyone to the individual seeker's advert form.
+  const noResults =
+    user?.role === "REFERRER"
+      ? {
+          body: "Try widening the area or removing a support category. You can also add the client you're placing, so their details are ready to send the moment a suitable room is advertised.",
+          actionHref: "/referrals/clients/new",
+          actionLabel: "Add a client",
+        }
+      : user?.role === "PROVIDER"
+        ? {
+            body: "Try widening the area or removing a support category. If you have a vacancy in this area, advertising it puts you in front of the case workers searching here.",
+            actionHref: "/provider/adverts/new",
+            actionLabel: "Advertise a room",
+          }
+        : {
+            body: "Try widening the area, removing a support category, or posting what you're looking for so providers can approach you.",
+            actionHref: user ? "/dashboard/advert" : "/register?type=USER",
+            actionLabel: "Post what you're looking for",
+          };
+
   const scoreFor = (listing: (typeof results.items)[number]) =>
     seeker
       ? matchScore(seeker, {
@@ -116,9 +138,9 @@ export default async function SearchPage({
             <div className="mt-6">
               <EmptyState
                 title="Nothing matches those filters yet"
-                body="Try widening the area, removing a support category, or posting what you're looking for so providers can approach you."
-                actionHref="/dashboard/advert"
-                actionLabel="Post what you're looking for"
+                body={noResults.body}
+                actionHref={noResults.actionHref}
+                actionLabel={noResults.actionLabel}
               />
             </div>
           ) : (
