@@ -24,7 +24,7 @@ export function MobileMenu({ children }: { children: React.ReactNode }) {
       document.removeEventListener("keydown", escape);
     };
   }, []);
-  return <details ref={ref} className="group relative lg:hidden" onClick={(event) => {
+  return <details ref={ref} className="group relative xl:hidden" onClick={(event) => {
     if ((event.target as HTMLElement).closest("a, form button") && ref.current) ref.current.open = false;
   }}>
     <summary className="grid h-11 w-11 cursor-pointer list-none place-items-center rounded-[10px] border border-line bg-white text-xl text-ink marker:hidden" aria-label="Navigation menu">

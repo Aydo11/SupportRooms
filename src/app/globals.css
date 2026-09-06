@@ -156,9 +156,12 @@
 }
 
 @layer utilities {
-  .surface-grid {
-    background-image: linear-gradient(rgba(22,102,170,.055) 1px, transparent 1px), linear-gradient(90deg, rgba(22,102,170,.055) 1px, transparent 1px);
-    background-size: 28px 28px;
+  .surface-home {
+    background-color: #f8fbfe;
+    background-image:
+      radial-gradient(ellipse at 8% 12%, rgba(22,102,170,.11) 0%, rgba(22,102,170,0) 38%),
+      radial-gradient(ellipse at 92% 8%, rgba(86,157,211,.12) 0%, rgba(86,157,211,0) 34%),
+      linear-gradient(145deg, #ffffff 0%, #fbfdff 48%, #eef6fd 100%);
   }
 
   .soft-orb {
