@@ -71,12 +71,18 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section className="shell grid gap-4 py-14 sm:grid-cols-2">
+      <section className="shell grid gap-4 py-14 sm:grid-cols-2 lg:grid-cols-3">
         <PathCard
           heading="Looking for somewhere to live"
           body="Tell providers what you need and where. They can find you, and you can search their rooms."
           href="/register?type=USER"
           cta="Create your advert"
+        />
+        <PathCard
+          heading="Placing someone you support"
+          body="For local authority case workers, social workers and support teams. Search vacancies, keep client details in one place and send referrals straight to providers."
+          href="/register?type=REFERRER"
+          cta="Set up a referrer account"
         />
         <PathCard
           heading="Advertising accommodation"
@@ -220,8 +226,16 @@ async function AvailabilityBoard() {
 
   if (!rows.length) {
     return (
-      <div className="card grid place-items-center p-10 text-center text-[15px] text-ink-soft">
-        Seed the database to see live availability here.
+      <div className="card grid place-items-center gap-3 border-t-4 border-t-pine p-10 text-center">
+        <p className="text-[16px] text-ink">Providers are adding vacancies now</p>
+        <p className="max-w-[46ch] text-[14px] text-ink-soft">
+          New availability appears here as soon as it is published. Tell us what you need and we
+          will point you to the right providers as they come on.
+        </p>
+        <div className="mt-1 flex flex-wrap justify-center gap-2">
+          <Link href="/search" className="btn-secondary">Browse all adverts</Link>
+          <Link href="/register?type=PROVIDER" className="btn-ghost">List a room</Link>
+        </div>
       </div>
     );
   }
