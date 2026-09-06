@@ -290,7 +290,7 @@ export async function forgotPasswordAction(_prev: FormState, formData: FormData)
   try {
     await sendEmail({
       to: user.email,
-      subject: "Reset your SupportRooms password",
+      subject: "Reset your RoomsNow password",
       text: `Reset your password using this link (valid for one hour): ${appUrl}/reset-password?token=${encodeURIComponent(token)}\n\nIf you did not request this, you can ignore this email.`,
       html: `<p>Reset your password using the link below. It is valid for one hour.</p><p><a href="${appUrl}/reset-password?token=${encodeURIComponent(token)}">Reset password</a></p><p>If you did not request this, you can ignore this email.</p>`,
     });
