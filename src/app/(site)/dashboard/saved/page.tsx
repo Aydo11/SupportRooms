@@ -18,7 +18,7 @@ export default async function SavedPage() {
     include: {
       listing: {
         include: {
-          company: { select: { id: true, name: true, slug: true, verification: true } },
+          company: { select: { id: true, name: true, slug: true, logoUrl: true, verification: true } },
           property: { select: { city: true, area: true, postcode: true, showExactAddress: true, addressLine1: true, latitude: true, longitude: true, verification: true } },
           media: { where: { type: "IMAGE" }, orderBy: [{ isPrimary: "desc" }, { position: "asc" }], take: 1 },
           rooms: { select: { status: true } },

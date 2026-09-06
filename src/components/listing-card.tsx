@@ -26,7 +26,7 @@ export function ListingCard({
   const available = listing.rooms.filter((r) => r.status === "AVAILABLE").length;
 
   return (
-    <Link href={href} className="card interactive-card group block overflow-hidden">
+    <Link href={href} className="card interactive-card group flex h-full flex-col overflow-hidden">
         <div className="relative aspect-[16/10] bg-paper-sunk">
           <ResilientImage
             src={image}
@@ -45,7 +45,7 @@ export function ListingCard({
             )}
           </div>
         </div>
-      <div className="p-4">
+      <div className="flex flex-1 flex-col p-4">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <h3 className="truncate text-[17px] hover:text-pine-dark">{listing.title}</h3>
@@ -70,31 +70,54 @@ export function ListingCard({
           </div>
         </dl>
 
-        {!compact && (
+        {!compact && listing.supportTypes.length > 0 && (
           <p className="mt-3 flex flex-wrap gap-1.5">
-            {listing.supportTypes.slice(0, 3).map((slug) => (
+            {listing.supportTypes.slice(0, listing.supportTypes.length > 2 ? 1 : 2).map((slug) => (
               <span key={slug} className="chip">{supportLabel(slug)}</span>
             ))}
-            {listing.supportTypes.length > 3 && (
-              <span className="chip">+{listing.supportTypes.length - 3}</span>
+            {listing.supportTypes.length > 2 && (
+              <span className="chip">+{listing.supportTypes.length - 1} more</span>
             )}
           </p>
         )}
 
-        <div className="mt-4 border-t border-line pt-3">
-          <div className="min-w-0 overflow-hidden">
-            <RoomStrip rooms={listing.rooms} />
+        <div className="mt-auto pt-4">
+          <div className="border-t border-line pt-3">
+            <div className="min-w-0 overflow-hidden">
+              <RoomStrip rooms={listing.rooms} />
+            </div>
+            <p className="mt-2 text-right text-[15px] font-medium leading-snug">
+              {rentRange(listing.weeklyRentFrom, listing.weeklyRentTo)}
+            </p>
           </div>
-          <p className="mt-2 text-right text-[15px] font-medium leading-snug">
-            {rentRange(listing.weeklyRentFrom, listing.weeklyRentTo)}
-          </p>
-        </div>
 
-        <div className="mt-3 flex items-center justify-between gap-2">
-          <span className="truncate text-[13px] text-ink-faint">{listing.company.name}</span>
-          {listing.company.verification === "APPROVED" && <VerifiedBadge />}
+          <div className="mt-3 flex min-h-9 items-center justify-between gap-2">
+            <span className="flex min-w-0 items-center gap-2">
+              {listing.company.logoUrl ? (
+                <span className="grid h-9 w-9 shrink-0 place-items-center overflow-hidden rounded-[9px] border border-line bg-white p-1">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={listing.company.logoUrl} alt="" className="h-full w-full object-contain" loading="lazy" />
+                </span>
+              ) : (
+                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-[9px] bg-pine-light text-[12px] font-semibold text-pine-dark" aria-hidden="true">
+                  {companyInitials(listing.company.name)}
+                </span>
+              )}
+              <span className="truncate text-[13px] text-ink-soft">{listing.company.name}</span>
+            </span>
+            {listing.company.verification === "APPROVED" && <VerifiedBadge compact />}
+          </div>
         </div>
       </div>
     </Link>
   );
+}
+
+function companyInitials(name: string) {
+  return name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((word) => word[0]?.toUpperCase())
+    .join("") || "RN";
 }
