@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Instrument_Sans, Newsreader } from "next/font/google";
+import { Instrument_Sans, Plus_Jakarta_Sans } from "next/font/google";
 import { brand } from "@/brand.config";
 import { Toaster } from "@/components/toast";
 import "./globals.css";
@@ -10,10 +10,10 @@ const sans = Instrument_Sans({
   display: "swap",
 });
 
-const display = Newsreader({
+const display = Plus_Jakarta_Sans({
   subsets: ["latin"],
   variable: "--font-display",
-  weight: ["400", "500", "600"],
+  weight: ["600", "700", "800"],
   display: "swap",
 });
 
@@ -25,7 +25,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#171F2E",
+  themeColor: "#1666AA",
   width: "device-width",
   initialScale: 1,
 };
