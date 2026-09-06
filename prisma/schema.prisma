@@ -566,6 +566,7 @@ model AccommodationRequest {
 
   @@unique([listingId, applicantId])
   @@index([status])
+  @@index([applicantId, status])
 }
 
 model Referral {
@@ -608,6 +609,10 @@ model Referral {
 
   @@index([status])
   @@index([clientId])
+  @@index([referrerId, status])
+  @@index([listingId, createdAt])
+  @@index([createdAt])
+  @@index([applicantEmail])
 }
 
 /// A person a referrer is supporting — their "caseload" or "tenants". Exists
@@ -667,6 +672,8 @@ model ReferralEvent {
   note       String?
   actorId    String?
   createdAt  DateTime       @default(now())
+
+  @@index([referralId, createdAt])
 }
 
 /// Provider-side pipeline record. A request or a referral becomes an application
@@ -717,6 +724,7 @@ model ConversationParticipant {
   archived       Boolean      @default(false)
 
   @@unique([conversationId, userId])
+  @@index([userId, archived])
 }
 
 model Message {
@@ -758,6 +766,7 @@ model SavedListing {
   createdAt DateTime @default(now())
 
   @@unique([userId, listingId])
+  @@index([listingId])
 }
 
 model Notification {
@@ -912,6 +921,9 @@ model VerificationRequest {
   createdAt             DateTime           @default(now())
 
   documents Document[]
+
+  @@index([status])
+  @@index([companyId])
 }
 
 model Report {
@@ -979,6 +991,8 @@ model AuditLog {
   createdAt  DateTime @default(now())
 
   @@index([targetType, targetId])
+  @@index([createdAt])
+  @@index([actorId, createdAt])
 }
 
 /// Admin-managed taxonomy so support categories are data, not hard-coded strings.
