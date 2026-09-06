@@ -24,9 +24,9 @@ export function Gallery({ media, title, listingId }: { media: Media[]; title: st
     <div aria-label="Property media gallery">
       <div className="group relative overflow-hidden rounded-card border border-line bg-black shadow-[0_8px_30px_rgba(21,42,58,.10)]">
         {current.type === "VIDEO" ? (
-          <video src={current.url} controls playsInline preload="metadata" className="aspect-video w-full bg-black" />
+          <video src={current.url} controls playsInline preload="metadata" className="aspect-video max-h-[42vh] w-full bg-black sm:max-h-none" />
         ) : current.type === "VIDEO_URL" ? (
-          <div className="aspect-video w-full">
+          <div className="aspect-video max-h-[42vh] w-full sm:max-h-none">
             <iframe
               src={toEmbed(current.url)}
               title={`${title} video`}
@@ -41,7 +41,7 @@ export function Gallery({ media, title, listingId }: { media: Media[]; title: st
             fallbackSrc={fallback.url}
             fallbackLabel={current.illustrative ? undefined : "Photo unavailable — illustrative image shown"}
             alt={current.caption ?? title}
-            className="aspect-video w-full object-cover"
+            className="aspect-video max-h-[42vh] w-full object-cover sm:max-h-none"
           />
         )}
 
