@@ -15,12 +15,12 @@ const config: Config = {
       },
       fontFamily: {
         sans: ["var(--font-sans)", "system-ui", "sans-serif"],
-        display: ["var(--font-display)", "Georgia", "serif"],
+        display: ["var(--font-display)", "var(--font-sans)", "system-ui", "sans-serif"],
       },
       borderRadius: { card: "14px", pill: "999px" },
       boxShadow: {
-        raise: "0 1px 2px rgba(23,31,46,.06), 0 8px 24px -12px rgba(23,31,46,.18)",
-        float: "0 18px 42px -24px rgba(23,31,46,.32), 0 4px 12px rgba(23,31,46,.08)",
+        raise: "0 1px 2px rgba(15,79,135,.06), 0 8px 24px -12px rgba(15,79,135,.20)",
+        float: "0 18px 42px -24px rgba(15,79,135,.34), 0 4px 12px rgba(15,79,135,.10)",
       },
       maxWidth: { shell: "1200px" },
       keyframes: {

@@ -14,7 +14,7 @@
 @layer base {
   :root {
     --font-sans: "Instrument Sans", system-ui, sans-serif;
-    --font-display: "Newsreader", Georgia, serif;
+    --font-display: "Plus Jakarta Sans", "Instrument Sans", system-ui, sans-serif;
   }
 
   html {
@@ -35,8 +35,8 @@
   }
 
   h1, h2, h3, h4 {
-    @apply font-display font-normal text-ink;
-    letter-spacing: -0.01em;
+    @apply font-display font-semibold text-ink;
+    letter-spacing: -0.025em;
   }
 
   /* Visible, consistent focus. Never removed. */
@@ -62,7 +62,7 @@
   }
 
   .card {
-    @apply rounded-card border border-line bg-paper-card shadow-[0_1px_2px_rgba(23,31,46,.04)];
+    @apply rounded-card border border-line bg-paper-card shadow-[0_1px_2px_rgba(15,79,135,.05)];
   }
 
   .label {
@@ -89,7 +89,7 @@
   }
 
   .btn-secondary {
-    @apply btn border border-line-strong bg-white text-ink hover:-translate-y-px hover:bg-paper-sunk hover:shadow-raise active:translate-y-0 active:scale-[0.98];
+    @apply btn border border-line-strong bg-white text-ink hover:-translate-y-px hover:border-pine/40 hover:bg-pine-light/60 hover:text-pine-dark hover:shadow-raise active:translate-y-0 active:scale-[0.98];
   }
 
   .btn-ghost {
@@ -102,7 +102,8 @@
 
   .chip {
     @apply inline-flex items-center gap-1.5 rounded-pill border border-line bg-white
-           px-3 py-1 text-[13px] text-ink-soft transition-[color,background-color,border-color,transform] duration-200;
+           px-3 py-1 text-[13px] text-ink-soft transition-[color,background-color,border-color,transform] duration-200
+           hover:border-pine/35 hover:bg-pine-light/45 hover:text-pine-dark;
   }
 
   .chip-active {
@@ -122,7 +123,7 @@
   }
 
   .interactive-card {
-    @apply transition-[border-color,box-shadow,transform] duration-300 ease-out hover:-translate-y-1 hover:border-line-strong hover:shadow-float;
+    @apply transition-[border-color,box-shadow,transform] duration-300 ease-out hover:-translate-y-1 hover:border-pine/35 hover:shadow-float;
   }
 
   /* A loading placeholder that reads as "still working", not "broken layout". */

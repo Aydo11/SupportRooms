@@ -20,14 +20,14 @@ export default async function HomePage() {
   return (
     <>
       {/* Hero: the search is the product, so it leads. */}
-      <section className="surface-grid relative overflow-hidden border-b border-line bg-white">
+      <section className="surface-grid relative overflow-hidden border-b border-line bg-gradient-to-br from-white via-white to-pine-light/55">
         <div aria-hidden="true" className="soft-orb absolute -left-32 top-0 h-[34rem] w-[34rem]" />
         <div aria-hidden="true" className="soft-orb absolute -right-44 bottom-[-16rem] h-[34rem] w-[34rem]" />
         <div className="shell relative grid gap-10 py-14 lg:grid-cols-[1.05fr_0.95fr] lg:py-20">
           <div className="self-center">
             <span className="eyebrow"><span className="h-1.5 w-1.5 rounded-full bg-pine" />More housing, in one place</span>
-            <h1 className="mt-5 max-w-[14ch] text-[42px] leading-[1.04] sm:text-[58px]">
-              Find the right housing across the UK
+            <h1 className="mt-5 max-w-[15ch] text-[42px] font-bold leading-[1.07] sm:text-[58px]">
+              Find the <span className="text-pine-dark">right housing</span> across the UK
             </h1>
             <p className="mt-5 max-w-[52ch] text-[17px] leading-relaxed text-ink-soft">
               Search HMOs, supported and transitional accommodation, adult social care housing,
@@ -109,8 +109,8 @@ export default async function HomePage() {
               ["Request or refer", "Send a structured request yourself, or a full referral if you work with someone."],
               ["Move in", "Track the offer through to move-in, with everyone seeing the same status."],
             ].map(([title, body], index) => (
-              <li key={title} className="rounded-card border border-line bg-paper p-5">
-                <span className="grid h-8 w-8 place-items-center rounded-full bg-pine-light text-[13px] font-semibold text-pine-dark">{index + 1}</span>
+              <li key={title} className="interactive-card rounded-card border border-line bg-paper p-5">
+                <span className="grid h-8 w-8 place-items-center rounded-full bg-pine text-[13px] font-semibold text-white shadow-[0_4px_10px_rgba(22,102,170,.2)]">{index + 1}</span>
                 <h3 className="mt-4 text-[18px]">{title}</h3>
                 <p className="mt-1.5 text-[15px] leading-relaxed text-ink-soft">{body}</p>
               </li>
@@ -120,7 +120,7 @@ export default async function HomePage() {
       </section>
 
       <section className="shell py-16">
-        <div className="card grid items-center gap-6 bg-[linear-gradient(120deg,#fff_0%,#fff_60%,#e8f2fc_155%)] p-8 sm:grid-cols-[1.4fr_auto]">
+        <div className="card grid items-center gap-6 border-l-4 border-l-pine bg-[linear-gradient(120deg,#fff_0%,#fff_55%,#e8f2fc_125%)] p-8 sm:grid-cols-[1.4fr_auto]">
           <div>
             <h2 className="text-[26px]">Providers can search people, too</h2>
             <p className="mt-2 max-w-[60ch] text-[15px] leading-relaxed text-ink-soft">
@@ -140,7 +140,7 @@ export default async function HomePage() {
 function Stat({ value, label }: { value: number; label: string }) {
   return (
     <div className="flex items-baseline gap-2 border-l border-line-strong pl-3 first:border-l-0 first:pl-0">
-      <dt className="font-display text-[26px] text-ink">{value.toLocaleString("en-GB")}</dt>
+      <dt className="font-display text-[26px] font-bold text-pine-dark">{value.toLocaleString("en-GB")}</dt>
       <dd className="text-ink-soft">{label}</dd>
     </div>
   );
@@ -169,8 +169,8 @@ async function AvailabilityBoard() {
   }
 
   return (
-    <div className="card overflow-hidden shadow-float">
-      <div className="flex items-center justify-between border-b border-line bg-paper-card/80 px-5 py-3.5">
+    <div className="card overflow-hidden border-t-4 border-t-pine shadow-float">
+      <div className="flex items-center justify-between border-b border-line bg-pine-light/45 px-5 py-3.5">
         <div className="flex items-center gap-2.5">
           <span className="relative flex h-2.5 w-2.5"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-pine/40" /><span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-pine" /></span>
           <h2 className="text-[16px]">Live availability</h2>
@@ -220,11 +220,11 @@ function PathCard({
 }) {
   const dark = tone === "ink";
   return (
-    <div className={dark ? "interactive-card rounded-card bg-ink p-8 text-white" : "card interactive-card p-8"}>
+    <div className={dark ? "interactive-card rounded-card bg-gradient-to-br from-pine-dark to-pine p-8 text-white shadow-float" : "card interactive-card border-t-4 border-t-pine p-8"}>
       <span className={dark ? "text-[12px] font-semibold tracking-[0.08em] text-pine-light" : "text-[12px] font-semibold tracking-[0.08em] text-pine-dark"}>{dark ? "FOR PROVIDERS" : "FOR PEOPLE LOOKING"}</span>
       <h2 className={dark ? "mt-3 text-[24px] text-white" : "mt-3 text-[24px]"}>{heading}</h2>
       <p className={`mt-2 max-w-[46ch] text-[15px] leading-relaxed ${dark ? "text-white/75" : "text-ink-soft"}`}>{body}</p>
-      <Link href={href} className={dark ? "btn mt-6 bg-white text-ink hover:bg-white/90" : "btn-primary mt-6"}>
+      <Link href={href} className={dark ? "btn mt-6 bg-white text-pine-dark shadow-raise hover:-translate-y-px hover:bg-pine-light" : "btn-primary mt-6"}>
         {cta}
       </Link>
     </div>
