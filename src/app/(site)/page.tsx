@@ -120,7 +120,7 @@ export default async function HomePage() {
       </section>
 
       <section className="shell py-16">
-        <div className="card grid items-center gap-6 bg-[linear-gradient(120deg,#fff_0%,#fff_60%,#e4f0eb_155%)] p-8 sm:grid-cols-[1.4fr_auto]">
+        <div className="card grid items-center gap-6 bg-[linear-gradient(120deg,#fff_0%,#fff_60%,#e8f2fc_155%)] p-8 sm:grid-cols-[1.4fr_auto]">
           <div>
             <h2 className="text-[26px]">Providers can search people, too</h2>
             <p className="mt-2 max-w-[60ch] text-[15px] leading-relaxed text-ink-soft">
