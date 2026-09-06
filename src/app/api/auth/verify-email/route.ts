@@ -32,5 +32,10 @@ export async function GET(request: NextRequest) {
 }
 
 function redirectResult(request: NextRequest, result: string) {
-  return NextResponse.redirect(new URL(`/verify-email?result=${result}`, request.url));
+  // Render sits behind a proxy, so request.url reflects the internal
+  // container address (localhost) rather than the public domain. Build the
+  // redirect from APP_URL, falling back to request.url only when APP_URL
+  // genuinely isn't configured.
+  const base = process.env.APP_URL || request.url;
+  return NextResponse.redirect(new URL(`/verify-email?result=${result}`, base));
 }
