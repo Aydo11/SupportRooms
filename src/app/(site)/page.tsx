@@ -83,6 +83,7 @@ export default async function HomePage() {
           body="For local authority case workers, social workers and support teams. Search vacancies, keep client details in one place and send referrals straight to providers."
           href="/register?type=REFERRER"
           cta="Set up a referrer account"
+          eyebrow="FOR PROFESSIONALS"
         />
         <PathCard
           heading="Advertising accommodation"
@@ -283,17 +284,20 @@ function PathCard({
   href,
   cta,
   tone = "paper",
+  eyebrow,
 }: {
   heading: string;
   body: string;
   href: string;
   cta: string;
   tone?: "paper" | "ink";
+  eyebrow?: string;
 }) {
   const dark = tone === "ink";
+  const label = eyebrow ?? (dark ? "FOR PROVIDERS" : "FOR PEOPLE LOOKING");
   return (
     <div className={dark ? "interactive-card rounded-card bg-gradient-to-br from-pine-dark to-pine p-8 text-white shadow-float" : "card interactive-card border-t-4 border-t-pine p-8"}>
-      <span className={dark ? "text-[12px] font-semibold tracking-[0.08em] text-pine-light" : "text-[12px] font-semibold tracking-[0.08em] text-pine-dark"}>{dark ? "FOR PROVIDERS" : "FOR PEOPLE LOOKING"}</span>
+      <span className={dark ? "text-[12px] font-semibold tracking-[0.08em] text-pine-light" : "text-[12px] font-semibold tracking-[0.08em] text-pine-dark"}>{label}</span>
       <h2 className={dark ? "mt-3 text-[24px] text-white" : "mt-3 text-[24px]"}>{heading}</h2>
       <p className={`mt-2 max-w-[46ch] text-[15px] leading-relaxed ${dark ? "text-white/75" : "text-ink-soft"}`}>{body}</p>
       <Link href={href} className={dark ? "btn mt-6 bg-white text-pine-dark shadow-raise hover:-translate-y-px hover:bg-pine-light" : "btn-primary mt-6"}>
