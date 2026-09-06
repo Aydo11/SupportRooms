@@ -8,7 +8,7 @@ export const brand = {
   tagline: "Housing and accommodation, findable.",
   description:
     "Find and advertise housing across the UK, including HMOs, supported and transitional accommodation, adult social care housing, shared homes and self-contained properties.",
-  supportEmail: "hello@roomsnow.example",
+  supportEmail: "hello@roomsnow.co.uk",
   currency: "GBP",
   currencySymbol: "£",
   // Legal / trust copy. Deliberately makes no regulatory claims.

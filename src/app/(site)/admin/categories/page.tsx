@@ -30,7 +30,7 @@ export default async function AdminCategories() {
       <section className="card mt-6 p-6">
         <h2 className="text-[20px]">Locations</h2>
         <p className="mt-2 text-[15px] text-ink-soft">
-          Used for location suggestions and map centring. Seeded from the demo data; add more in the
+          Used for location suggestions and map centring. Add more in the
           seed file or through Prisma Studio.
         </p>
         <ul className="mt-4 flex flex-wrap gap-2">

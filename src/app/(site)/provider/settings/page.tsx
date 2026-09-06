@@ -50,11 +50,11 @@ export default async function ProviderSettingsPage() {
       />
 
       <section className="card mt-6 p-6">
-        <h2 className="text-[20px]">Verification</h2>
+        <h2 className="text-[20px]">Provider due diligence and verification</h2>
         <p className="mt-2 max-w-[62ch] text-[15px] leading-relaxed text-ink-soft">
-          Our team checks the documents you send and adds a verified badge to your adverts. This is
-          our own check of who you are — it isn&apos;t a regulatory registration and doesn&apos;t
-          imply one.
+          Submit evidence of your legal identity, insurance, governance and safeguarding arrangements.
+          Our team records each check before adding a verified badge. The badge is a RoomsNow identity
+          and evidence check, not a regulator&apos;s inspection, licence or endorsement.
         </p>
 
         {company.verification === "APPROVED" ? (
@@ -67,9 +67,9 @@ export default async function ProviderSettingsPage() {
           </p>
         ) : (
           <div className="mt-4">
-            {verification?.status === "REJECTED" && verification.note && (
+            {verification?.status === "REJECTED" && verification.reviewNote && (
               <p className="mb-4 rounded-[10px] bg-clay-light px-4 py-3 text-[14px] text-clay-dark">
-                Last request wasn&apos;t approved: {verification.note}
+                Last request wasn&apos;t approved: {verification.reviewNote}
               </p>
             )}
             <VerificationForm />

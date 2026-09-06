@@ -886,6 +886,15 @@ model VerificationRequest {
   reviewedBy  String?
   reviewedAt  DateTime?
   note        String?
+  reviewNote            String?
+  insuranceExpiresAt    DateTime?
+  declarationAcceptedAt DateTime?
+  checklistVersion      String  @default("2026-09")
+  registrationChecked   Boolean @default(false)
+  insuranceChecked      Boolean @default(false)
+  governanceChecked     Boolean @default(false)
+  safeguardingChecked   Boolean @default(false)
+  identityChecked       Boolean @default(false)
   createdAt   DateTime           @default(now())
 
   documents Document[]
@@ -935,6 +944,7 @@ model Document {
   verificationRequestId String?
   verificationRequest   VerificationRequest?  @relation(fields: [verificationRequestId], references: [id], onDelete: Cascade)
   name                  String
+  category              String?
   url                   String
   mimeType              String?
   sizeBytes             Int?

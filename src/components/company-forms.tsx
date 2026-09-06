@@ -4,6 +4,10 @@ import { useActionState } from "react";
 import { requestVerificationAction, updateCompanyAction } from "@/server/actions/company";
 import { CheckGroup, Field, FormError, FormSuccess, SubmitButton } from "./ui";
 import { ORG_TYPES, SUPPORT_TYPES } from "@/lib/taxonomy";
+import {
+  OPTIONAL_VERIFICATION_DOCUMENTS,
+  REQUIRED_VERIFICATION_DOCUMENTS,
+} from "@/lib/verification";
 
 export function CompanyForm({
   company,
@@ -118,20 +122,74 @@ export function VerificationForm() {
       <FormError message={state.errors?.form} />
       <FormSuccess message={state.ok ? state.message : undefined} />
 
+      <div className="rounded-card border border-pine/25 bg-pine-light/35 p-4 text-[14px] leading-relaxed text-ink-soft">
+        Every required item is reviewed by a person. Files remain private and are available only to
+        authorised company staff and the RoomsNow verification team.
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        {REQUIRED_VERIFICATION_DOCUMENTS.map((document) => (
+          <Field
+            key={document.input}
+            label={document.label}
+            name={document.input}
+            hint={document.hint}
+            required
+            error={state.errors?.[document.input]}
+          >
+            <input
+              id={document.input}
+              name={document.input}
+              type="file"
+              required
+              accept="application/pdf,image/jpeg,image/png,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+              className="field"
+            />
+          </Field>
+        ))}
+      </div>
+
       <Field
-        label="Documents"
-        name="documents"
-        hint="Proof of your organisation — for example a company registration, insurance certificate or headed letter. PDF, JPG or PNG."
-        error={state.errors?.documents}
+        label="Insurance expiry date"
+        name="insuranceExpiry"
+        hint="Your badge can be reviewed when this evidence expires."
+        required
+        error={state.errors?.insuranceExpiry}
       >
-        <input id="documents" name="documents" type="file" multiple accept="application/pdf,image/*" className="field" />
+        <input id="insuranceExpiry" name="insuranceExpiry" type="date" required className="field max-w-xs" />
+      </Field>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        {OPTIONAL_VERIFICATION_DOCUMENTS.map((document) => (
+          <Field key={document.input} label={`${document.label} (if applicable)`} name={document.input} hint={document.hint}>
+            <input
+              id={document.input}
+              name={document.input}
+              type="file"
+              accept="application/pdf,image/jpeg,image/png,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+              className="field"
+            />
+          </Field>
+        ))}
+      </div>
+
+      <Field label="Additional due-diligence evidence" name="additionalDocuments" hint="Optional policies, accreditations or commissioning evidence. Up to five files.">
+        <input id="additionalDocuments" name="additionalDocuments" type="file" multiple accept="application/pdf,image/jpeg,image/png,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" className="field" />
       </Field>
 
       <Field label="Anything we should know" name="note">
         <textarea id="note" name="note" rows={3} className="field" />
       </Field>
 
-      <SubmitButton pendingLabel="Sending…">Send for verification</SubmitButton>
+      <label className="flex items-start gap-3 rounded-card border border-line bg-paper p-4 text-[14px] leading-relaxed text-ink-soft">
+        <input name="declaration" type="checkbox" value="1" required className="mt-1 h-4 w-4 accent-pine" />
+        <span>
+          I am authorised to submit this evidence. I confirm it is accurate, current and relates to
+          this organisation, and I will tell RoomsNow if anything material changes.
+        </span>
+      </label>
+
+      <SubmitButton pendingLabel="Submitting securely…">Submit due-diligence review</SubmitButton>
     </form>
   );
 }

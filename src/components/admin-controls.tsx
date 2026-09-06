@@ -13,6 +13,7 @@ import {
   toggleFeaturedAction,
 } from "@/server/actions/admin";
 import type { ReportStatus } from "@prisma/client";
+import type { VerificationChecks } from "@/lib/verification";
 
 export function ListingModeration({
   id,
@@ -79,18 +80,36 @@ export function ListingModeration({
   );
 }
 
-export function VerificationDecision({ id }: { id: string }) {
+export function VerificationDecision({ id, requiredDocumentsPresent }: { id: string; requiredDocumentsPresent: boolean }) {
   const router = useRouter();
   const [note, setNote] = useState("");
+  const [checks, setChecks] = useState<VerificationChecks>({ register: false, insurance: false, governance: false, safeguarding: false, identity: false });
   const [pending, startTransition] = useTransition();
+  const allChecked = requiredDocumentsPresent && Object.values(checks).every(Boolean);
   const run = (approve: boolean) =>
     startTransition(async () => {
-      await reviewVerificationAction(id, approve, note.trim() || undefined);
+      await reviewVerificationAction(id, approve, note.trim() || undefined, checks);
       router.refresh();
     });
 
   return (
     <div className="space-y-2">
+      <fieldset className="space-y-2 rounded-[10px] border border-line bg-paper p-3">
+        <legend className="px-1 text-[13px] font-semibold text-ink">Reviewer checks</legend>
+        {([
+          ["register", "Registration and Companies House or charity record match"],
+          ["insurance", "Insurance is valid and appropriate"],
+          ["governance", "Governance and accountable roles are clear"],
+          ["safeguarding", "Safeguarding policy and escalation route reviewed"],
+          ["identity", "Submitting organisation and contact identity are consistent"],
+        ] as const).map(([key, label]) => (
+          <label key={key} className="flex items-start gap-2 text-[12px] leading-snug text-ink-soft">
+            <input type="checkbox" checked={checks[key]} onChange={(event) => setChecks((current) => ({ ...current, [key]: event.target.checked }))} className="mt-0.5 h-4 w-4 accent-pine" />
+            <span>{label}</span>
+          </label>
+        ))}
+      </fieldset>
+      {!requiredDocumentsPresent && <p className="text-[12px] text-clay-dark">Required evidence is missing. Reject and request a complete pack.</p>}
       <label className="sr-only" htmlFor={`vnote-${id}`}>Note</label>
       <input
         id={`vnote-${id}`}
@@ -100,7 +119,7 @@ export function VerificationDecision({ id }: { id: string }) {
         onChange={(event) => setNote(event.target.value)}
       />
       <div className="flex gap-2">
-        <button className="btn-primary" disabled={pending} onClick={() => run(true)}>Approve</button>
+        <button className="btn-primary" disabled={pending || !allChecked} onClick={() => run(true)}>Approve verification</button>
         <button className="btn-ghost text-clay-dark" disabled={pending} onClick={() => run(false)}>Reject</button>
       </div>
     </div>

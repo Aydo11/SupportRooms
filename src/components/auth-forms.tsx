@@ -204,9 +204,9 @@ export function RegisterForm() {
       )}
 
       <label className="flex items-start gap-3">
-        <input type="checkbox" name="terms" className="mt-1 h-4 w-4 rounded border-line-strong text-pine focus:ring-pine" />
+        <input type="checkbox" name="terms" required className="mt-1 h-4 w-4 rounded border-line-strong text-pine focus:ring-pine" />
         <span className="text-[15px] leading-relaxed text-ink-soft">
-          I agree to the terms of use and privacy notice.
+          I agree to the <Link href="/terms" target="_blank" className="font-medium text-pine-dark underline underline-offset-2">terms of use</Link> and confirm I have read the <Link href="/privacy" target="_blank" className="font-medium text-pine-dark underline underline-offset-2">privacy notice</Link>.
         </span>
       </label>
       {state.errors?.terms && <p className="text-[13px] text-clay">{state.errors.terms}</p>}
