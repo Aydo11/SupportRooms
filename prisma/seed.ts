@@ -20,7 +20,7 @@ const pence = (pounds: number) => Math.round(pounds * 100);
 const ref = (prefix: string, n: number) => `${prefix}-${String(n).padStart(5, "0")}`;
 
 /** Placeholder imagery is generated locally so the demo works with no network. */
-const PALETTE = ["#1F6F5C", "#2C5468", "#7A6A52", "#4A5D4E", "#8A5A3B", "#3F4A63"];
+const PALETTE = ["#1666AA", "#171F2E", "#549DE5", "#244B73", "#3D6F9E", "#0E1624"];
 
 async function writePlaceholder(name: string, label: string, index: number): Promise<string> {
   const dir = path.join(process.cwd(), "public", "uploads", "seed");
