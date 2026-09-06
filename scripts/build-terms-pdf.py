@@ -76,7 +76,7 @@ SECTIONS = [
     ]),
     ("18. Governing law, complaints and contact", [
         "These terms are governed by the law of England and Wales. Consumers retain any mandatory rights to bring proceedings in the part of the UK where they live.",
-        "Raise complaints first with RoomsNow at hello@roomsnow.co.uk. This does not affect rights to contact a regulator, ombudsman, trading standards service or court."
+        "Raise complaints first with RoomsNow at info@roomsnow.co.uk. This does not affect rights to contact a regulator, ombudsman, trading standards service or court."
     ]),
 ]
 
