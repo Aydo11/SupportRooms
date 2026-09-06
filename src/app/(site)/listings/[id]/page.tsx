@@ -113,7 +113,7 @@ export default async function ListingPage({
       </nav>
 
       <div className="grid gap-8 lg:grid-cols-[1fr_340px]">
-        <div>
+        <div className="min-w-0">
           <Gallery media={listing.media} title={listing.title} listingId={listing.id} />
 
           <header className="mt-7">
