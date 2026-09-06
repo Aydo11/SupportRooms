@@ -8,6 +8,11 @@ import { storage, validateUpload, verifyFileContents } from "@/lib/storage";
 import { notify } from "@/lib/notify";
 import { fieldErrors, companySchema, type FormState } from "@/lib/validation";
 import { bool, list, text } from "../form";
+import {
+  OPTIONAL_VERIFICATION_DOCUMENTS,
+  REQUIRED_VERIFICATION_DOCUMENTS,
+  VERIFICATION_CHECKLIST_VERSION,
+} from "@/lib/verification";
 
 export async function updateCompanyAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const { user, companyId } = await requireCompany();
@@ -79,8 +84,67 @@ export async function updateCompanyAction(_prev: FormState, formData: FormData):
 export async function requestVerificationAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const { user, companyId } = await requireCompany();
 
-  const files = formData.getAll("documents").filter((f): f is File => f instanceof File && f.size > 0);
-  if (!files.length) return { ok: false, errors: { documents: "Attach at least one document." } };
+  const company = await db.company.findUniqueOrThrow({
+    where: { id: companyId },
+    select: { registrationNumber: true, addressLine1: true, city: true, postcode: true },
+  });
+  if (!company.registrationNumber || !company.addressLine1 || !company.city || !company.postcode) {
+    return { ok: false, errors: { form: "Complete your registration number and registered address before requesting verification." } };
+  }
+  if (!bool(formData, "declaration")) {
+    return { ok: false, errors: { form: "Confirm the authorised declaration before submitting." } };
+  }
+
+  const insuranceExpiryText = text(formData, "insuranceExpiry");
+  const insuranceExpiresAt = insuranceExpiryText ? new Date(`${insuranceExpiryText}T12:00:00.000Z`) : null;
+  if (!insuranceExpiresAt || Number.isNaN(insuranceExpiresAt.getTime()) || insuranceExpiresAt <= new Date()) {
+    return { ok: false, errors: { insuranceExpiry: "Enter a future expiry date for the insurance evidence." } };
+  }
+
+  const categorisedFiles: { file: File; category: string; input: string }[] = [];
+  for (const document of REQUIRED_VERIFICATION_DOCUMENTS) {
+    const file = formData.get(document.input);
+    if (!(file instanceof File) || file.size === 0) {
+      return { ok: false, errors: { [document.input]: `Attach ${document.label.toLowerCase()}.` } };
+    }
+    categorisedFiles.push({ file, category: document.category, input: document.input });
+  }
+  for (const document of OPTIONAL_VERIFICATION_DOCUMENTS) {
+    const file = formData.get(document.input);
+    if (file instanceof File && file.size > 0) categorisedFiles.push({ file, category: document.category, input: document.input });
+  }
+  const additional = formData.getAll("additionalDocuments").filter((file): file is File => file instanceof File && file.size > 0);
+  if (additional.length > 5) return { ok: false, errors: { additionalDocuments: "Attach no more than five additional files." } };
+  categorisedFiles.push(...additional.map((file) => ({ file, category: "ADDITIONAL", input: "additionalDocuments" })));
+
+  for (const { file, input } of categorisedFiles) {
+    const invalid = validateUpload(file, "document");
+    if (invalid) return { ok: false, errors: { [input]: invalid } };
+    const mismatch = await verifyFileContents(file, Buffer.from(await file.arrayBuffer()));
+    if (mismatch) return { ok: false, errors: { [input]: mismatch } };
+  }
+
+  const storedDocuments: {
+    companyId: string;
+    name: string;
+    category: string;
+    url: string;
+    mimeType: string;
+    sizeBytes: number;
+    isPrivate: boolean;
+  }[] = [];
+  for (const { file, category } of categorisedFiles) {
+    const stored = await storage.put(file, `verification/${companyId}`, "private");
+    storedDocuments.push({
+      companyId,
+      name: file.name,
+      category,
+      url: stored.url,
+      mimeType: stored.mimeType,
+      sizeBytes: stored.sizeBytes,
+      isPrivate: true,
+    });
+  }
 
   const request = await db.verificationRequest.create({
     data: {
@@ -89,27 +153,12 @@ export async function requestVerificationAction(_prev: FormState, formData: Form
       status: "PENDING",
       submittedBy: user.id,
       note: text(formData, "note") || null,
+      insuranceExpiresAt,
+      declarationAcceptedAt: new Date(),
+      checklistVersion: VERIFICATION_CHECKLIST_VERSION,
+      documents: { create: storedDocuments },
     },
   });
-
-  for (const file of files) {
-    const invalid = validateUpload(file, "document");
-    if (invalid) return { ok: false, errors: { documents: invalid } };
-    const mismatch = await verifyFileContents(file, Buffer.from(await file.arrayBuffer()));
-    if (mismatch) return { ok: false, errors: { documents: mismatch } };
-    const stored = await storage.put(file, `verification/${companyId}`, "private");
-    await db.document.create({
-      data: {
-        companyId,
-        verificationRequestId: request.id,
-        name: file.name,
-        url: stored.url,
-        mimeType: stored.mimeType,
-        sizeBytes: stored.sizeBytes,
-        isPrivate: true,
-      },
-    });
-  }
 
   await db.company.update({ where: { id: companyId }, data: { verification: "PENDING" } });
   await audit({
@@ -117,6 +166,7 @@ export async function requestVerificationAction(_prev: FormState, formData: Form
     action: "verification.requested",
     targetType: "Company",
     targetId: companyId,
+    metadata: { requestId: request.id, checklistVersion: VERIFICATION_CHECKLIST_VERSION, documentCount: storedDocuments.length },
   });
 
   const admins = await db.user.findMany({ where: { role: "ADMIN" }, select: { id: true } });
@@ -126,12 +176,12 @@ export async function requestVerificationAction(_prev: FormState, formData: Form
         userId: admin.id,
         type: "SYSTEM",
         title: "Verification request submitted",
-        body: "A provider has sent documents for manual verification.",
+        body: "A provider has submitted a complete due-diligence evidence pack for review.",
         href: "/admin/verification",
       }),
     ),
   );
 
   revalidatePath("/provider/settings");
-  return { ok: true, message: "Sent. Our team will review your documents and be in touch." };
+  return { ok: true, message: "Submitted securely. Our verification team will review the evidence and record each check." };
 }

@@ -128,7 +128,7 @@ export function SiteFooter() {
       </div>
       <div className="border-t border-line">
         <div className="shell flex flex-col gap-2 py-6 text-[13px] text-ink-faint sm:flex-row sm:items-center sm:justify-between">
-          <p>© {new Date().getFullYear()} {brand.name}. Demonstration data — not a live service.</p>
+          <p>© {new Date().getFullYear()} {brand.name}. All rights reserved.</p>
           <p className="max-w-xl">{brand.trustNote}</p>
         </div>
       </div>

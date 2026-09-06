@@ -7,6 +7,7 @@ import { audit } from "@/lib/audit";
 import { notify, notifyCompany } from "@/lib/notify";
 import type { ReportStatus } from "@prisma/client";
 import { z } from "zod";
+import type { VerificationChecks } from "@/lib/verification";
 
 export async function approveListingAction(listingId: string) {
   const admin = await requireAdmin("MODERATION");
@@ -48,15 +49,22 @@ export async function rejectListingAction(listingId: string, note: string) {
   revalidatePath("/admin/listings");
 }
 
-export async function reviewVerificationAction(requestId: string, approve: boolean, note?: string) {
+export async function reviewVerificationAction(requestId: string, approve: boolean, note?: string, checks?: VerificationChecks) {
   const admin = await requireAdmin();
+  const completeChecks = checks && Object.values(checks).every(Boolean);
+  if (approve && !completeChecks) throw new Error("Complete every due-diligence check before approval.");
   const request = await db.verificationRequest.update({
     where: { id: requestId },
     data: {
       status: approve ? "APPROVED" : "REJECTED",
       reviewedBy: admin.id,
       reviewedAt: new Date(),
-      note: note ?? null,
+      reviewNote: note ?? null,
+      registrationChecked: Boolean(checks?.register),
+      insuranceChecked: Boolean(checks?.insurance),
+      governanceChecked: Boolean(checks?.governance),
+      safeguardingChecked: Boolean(checks?.safeguarding),
+      identityChecked: Boolean(checks?.identity),
     },
   });
 
@@ -87,6 +95,7 @@ export async function reviewVerificationAction(requestId: string, approve: boole
     action: approve ? "admin.verification_approved" : "admin.verification_rejected",
     targetType: "VerificationRequest",
     targetId: requestId,
+    metadata: { note, checks },
   });
   revalidatePath("/admin/verification");
 }
