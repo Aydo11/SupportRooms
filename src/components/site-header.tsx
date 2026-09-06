@@ -18,7 +18,7 @@ export async function SiteHeader() {
     <header className="sticky top-0 z-40 border-b border-line/90 bg-paper/90 backdrop-blur-lg">
       <div className="shell flex h-16 items-center gap-6">
         <Link href="/" className="flex shrink-0 items-center" aria-label={`${brand.name} home`}>
-          <Logo className="h-9 w-auto max-w-[150px]" />
+          <Logo className="h-10 w-auto max-w-[158px] sm:h-11 sm:max-w-[180px]" />
         </Link>
 
         <nav aria-label="Main navigation" className="hidden items-center gap-6 text-[15px] text-ink-soft lg:flex">
@@ -94,7 +94,7 @@ export function SiteFooter() {
       <div className="shell grid gap-10 py-14 sm:grid-cols-2 lg:grid-cols-4">
         <div>
           <Link href="/" className="inline-flex items-center" aria-label={`${brand.name} home`}>
-            <Logo className="h-10 w-auto max-w-[170px]" />
+            <Logo className="h-11 w-auto max-w-[185px]" />
           </Link>
           <p className="mt-3 max-w-xs text-[14px] leading-relaxed text-ink-soft">{brand.description}</p>
         </div>
