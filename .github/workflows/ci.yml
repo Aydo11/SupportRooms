@@ -1,0 +1,72 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  # Dummy values so `prisma generate` and `next build` succeed without a real
+  # database or secrets. Every page that reads the database is force-dynamic
+  # (rendered at request time, not at build time), so the build never actually
+  # connects to Postgres — these only need to be syntactically valid.
+  DATABASE_URL: "postgresql://ci:ci@localhost:5432/ci?schema=public"
+  DIRECT_URL: "postgresql://ci:ci@localhost:5432/ci?schema=public"
+  AUTH_SECRET: "ci-only-secret-not-used-in-production-0000000000"
+  APP_URL: "http://localhost:3000"
+  BILLING_DRIVER: "mock"
+  ALLOW_MOCK_BILLING: "true"
+  STORAGE_DRIVER: "local"
+  EMAIL_DRIVER: "console"
+  SMS_DRIVER: "console"
+  GEOCODE_DRIVER: "none"
+  RATE_LIMIT_DRIVER: "memory"
+
+jobs:
+  build-and-test:
+    name: Typecheck, build, and test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma client
+        run: npx prisma generate
+
+      - name: Type-check
+        run: npm run typecheck
+
+      - name: Run unit tests
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+  audit:
+    name: Dependency audit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: npm audit (high and critical only)
+        run: npm audit --audit-level=high
