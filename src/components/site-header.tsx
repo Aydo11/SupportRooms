@@ -17,9 +17,8 @@ export async function SiteHeader() {
   return (
     <header className="sticky top-0 z-40 border-b border-line/90 bg-paper/90 backdrop-blur-lg">
       <div className="shell flex h-16 items-center gap-6">
-        <Link href="/" className="flex items-center gap-2.5 font-display text-[21px] text-ink">
-          <Logo />
-          <span className="hidden min-[360px]:inline">{brand.name}</span>
+        <Link href="/" className="flex shrink-0 items-center" aria-label={`${brand.name} home`}>
+          <Logo className="h-9 w-auto max-w-[150px]" />
         </Link>
 
         <nav aria-label="Main navigation" className="hidden items-center gap-6 text-[15px] text-ink-soft lg:flex">
@@ -83,13 +82,9 @@ function MobileLink({ href, children }: { href: string; children: React.ReactNod
   return <Link href={href} className="block rounded-[9px] px-3 py-3 text-[15px] text-ink-soft hover:bg-paper-sunk hover:text-ink">{children}</Link>;
 }
 
-export function Logo() {
+export function Logo({ className = "h-9 w-auto" }: { className?: string }) {
   return (
-    <svg viewBox="0 0 28 28" className="h-7 w-7" aria-hidden="true">
-      <rect width="28" height="28" rx="7" className="fill-ink" />
-      <path d="M6 17.5 14 8l8 9.5" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-      <rect x="10.5" y="14" width="7" height="6" rx="1.2" className="fill-pine" />
-    </svg>
+    <img src="/brand/roomsnow-logo-fullcolor.svg" alt="" aria-hidden="true" className={className} />
   );
 }
 
@@ -98,9 +93,8 @@ export function SiteFooter() {
     <footer className="mt-20 border-t border-line bg-white">
       <div className="shell grid gap-10 py-14 sm:grid-cols-2 lg:grid-cols-4">
         <div>
-          <Link href="/" className="flex items-center gap-2.5 font-display text-[19px]">
-            <Logo />
-            {brand.name}
+          <Link href="/" className="inline-flex items-center" aria-label={`${brand.name} home`}>
+            <Logo className="h-10 w-auto max-w-[170px]" />
           </Link>
           <p className="mt-3 max-w-xs text-[14px] leading-relaxed text-ink-soft">{brand.description}</p>
         </div>
