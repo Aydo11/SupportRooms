@@ -10,7 +10,7 @@ export const email = z.string().trim().toLowerCase().email("Enter a valid email 
  */
 const COMMON_PASSWORDS = new Set([
   "password123", "123456789012", "qwertyuiop12", "letmein12345", "welcome12345",
-  "supportrooms", "password1234", "iloveyou1234", "admin1234567", "changeme1234",
+  "supportrooms", "roomsnow", "password1234", "iloveyou1234", "admin1234567", "changeme1234",
 ]);
 
 export const password = z
