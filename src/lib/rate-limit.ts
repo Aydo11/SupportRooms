@@ -130,6 +130,7 @@ export const LIMITS = {
   passwordReset: { limit: 4, windowMs: 60 * 60_000 },
   oauth: { limit: 20, windowMs: 15 * 60_000 },
   message: { limit: 30, windowMs: 60_000 },
+  emailVerification: { limit: 5, windowMs: 60 * 60_000 },
   request: { limit: 10, windowMs: 60 * 60_000 },
   referral: { limit: 20, windowMs: 60 * 60_000 },
   report: { limit: 10, windowMs: 60 * 60_000 },

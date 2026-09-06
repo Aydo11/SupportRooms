@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useActionState } from "react";
+import { useCallback, useEffect, useRef, useState, useActionState } from "react";
 import { sendMessageAction } from "@/server/actions/engagement";
 import { SubmitButton } from "./ui";
 
@@ -29,32 +29,50 @@ export function Thread({
   const [state, action] = useActionState(sendMessageAction, { ok: false });
   const endRef = useRef<HTMLDivElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
+  const [online, setOnline] = useState(true);
+
+  const refreshMessages = useCallback(async () => {
+    try {
+      const response = await fetch(`/api/conversations/${conversationId}/messages`, { cache: "no-store" });
+      if (!response.ok) return;
+      const data = (await response.json()) as { messages: ThreadMessage[] };
+      setOnline(true);
+      setMessages((current) => {
+        const currentVersion = current.map((message) => `${message.id}:${message.readAt ?? ""}`).join("|");
+        const nextVersion = data.messages.map((message) => `${message.id}:${message.readAt ?? ""}`).join("|");
+        return currentVersion === nextVersion ? current : data.messages;
+      });
+    } catch {
+      setOnline(false);
+    }
+  }, [conversationId]);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ block: "end" });
   }, [messages.length]);
 
   useEffect(() => {
-    if (state.ok) formRef.current?.reset();
-  }, [state]);
+    if (state.ok) {
+      formRef.current?.reset();
+      void refreshMessages();
+    }
+  }, [state.ok, refreshMessages]);
 
   useEffect(() => {
-    const timer = setInterval(async () => {
-      try {
-        const response = await fetch(`/api/conversations/${conversationId}/messages`, { cache: "no-store" });
-        if (!response.ok) return;
-        const data = (await response.json()) as { messages: ThreadMessage[] };
-        setMessages((current) => (data.messages.length === current.length ? current : data.messages));
-      } catch {
-        // Offline or navigating away — the next tick will retry.
-      }
-    }, 5000);
-    return () => clearInterval(timer);
-  }, [conversationId]);
+    const timer = setInterval(() => void refreshMessages(), 2500);
+    const onVisible = () => { if (document.visibilityState === "visible") void refreshMessages(); };
+    window.addEventListener("focus", refreshMessages);
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      clearInterval(timer);
+      window.removeEventListener("focus", refreshMessages);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, [refreshMessages]);
 
   return (
     <>
-      <ol className="mt-6 space-y-3 pb-4">
+      <ol className="mt-6 space-y-3 pb-4" aria-live="polite" aria-relevant="additions">
         {messages.map((message) => {
           const mine = message.senderId === currentUserId;
           return (
@@ -90,9 +108,20 @@ export function Thread({
           required
           placeholder="Write a message"
           className="min-h-[46px] flex-1 resize-none rounded-[10px] border-0 px-3 py-3 text-[15px] focus:ring-0"
+          onInput={(event) => {
+            event.currentTarget.style.height = "46px";
+            event.currentTarget.style.height = `${Math.min(event.currentTarget.scrollHeight, 144)}px`;
+          }}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" && !event.shiftKey) {
+              event.preventDefault();
+              formRef.current?.requestSubmit();
+            }
+          }}
         />
         <SubmitButton className="btn-primary" pendingLabel="Sending">Send</SubmitButton>
       </form>
+      {!online && <p className="mt-2 text-[13px] text-clay">Connection interrupted. Your messages will refresh when you are back online.</p>}
       {state.errors?.body && <p className="mt-2 text-[13px] text-clay">{state.errors.body}</p>}
     </>
   );

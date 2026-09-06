@@ -6,7 +6,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider  = "postgresql"
   // Runtime connection — point this at a pooler (PgBouncer, Neon's pooled
   // endpoint, Supabase's "Transaction" mode) in production. Poolers in
   // transaction mode don't support prepared statements, which is fine for
@@ -229,54 +229,68 @@ enum NotificationType {
 // ---------------------------------------------------------------- identity
 
 model User {
-  id                String        @id @default(cuid())
-  email             String        @unique
-  passwordHash      String
-  role              Role          @default(USER)
-  adminPermissions  String[]      @default(["ALL"])
-  status            AccountStatus @default(ACTIVE)
-  firstName         String
-  lastName          String
-  phone             String?
-  locationLabel     String?
-  contactMethod     ContactMethod @default(MESSAGE)
-  emailVerified     DateTime?
-  lastLoginAt       DateTime?
+  id                        String        @id @default(cuid())
+  email                     String        @unique
+  passwordHash              String
+  role                      Role          @default(USER)
+  adminPermissions          String[]      @default(["ALL"])
+  status                    AccountStatus @default(ACTIVE)
+  firstName                 String
+  lastName                  String
+  phone                     String?
+  locationLabel             String?
+  contactMethod             ContactMethod @default(MESSAGE)
+  emailVerified             DateTime?
+  emailVerificationRequired Boolean       @default(false)
+  lastLoginAt               DateTime?
   /// Bumped on password change, logout-everywhere and suspension. Any session
   /// token issued before the current value is rejected, so a stolen cookie stops
   /// working the moment the account owner reacts.
-  tokenVersion      Int           @default(0)
-  passwordChangedAt DateTime?
-  deletedAt         DateTime?
-  retainUntil       DateTime?
-  createdAt         DateTime      @default(now())
-  updatedAt         DateTime      @updatedAt
+  tokenVersion              Int           @default(0)
+  passwordChangedAt         DateTime?
+  deletedAt                 DateTime?
+  retainUntil               DateTime?
+  createdAt                 DateTime      @default(now())
+  updatedAt                 DateTime      @updatedAt
 
-  profile             UserProfile?
-  staffOf             CompanyStaff[]
-  lookingForAds       LookingForAd[]
-  requests            AccommodationRequest[]    @relation("RequestApplicant")
-  referralsMade       Referral[]                @relation("ReferralReferrer")
-  savedListings       SavedListing[]
-  notifications       Notification[]
-  messages            Message[]
-  participations      ConversationParticipant[]
-  reportsFiled        Report[]                  @relation("ReportReporter")
-  reportEvents        ReportEvent[]             @relation("ReportEventActor")
-  documents           Document[]
-  auditLogs           AuditLog[]
-  blocksMade          Block[]                   @relation("Blocker")
-  blocksReceived      Block[]                   @relation("Blocked")
-  passwordResetTokens PasswordResetToken[]
-  referrerSubscription ReferrerSubscription?
-  referrerPayments     ReferrerPayment[]
-  clients              Client[]                  @relation("ReferrerClients")
-  clientSharesSent     ClientShare[]             @relation("ClientSharesSent")
+  profile                 UserProfile?
+  staffOf                 CompanyStaff[]
+  lookingForAds           LookingForAd[]
+  requests                AccommodationRequest[]    @relation("RequestApplicant")
+  referralsMade           Referral[]                @relation("ReferralReferrer")
+  savedListings           SavedListing[]
+  notifications           Notification[]
+  messages                Message[]
+  participations          ConversationParticipant[]
+  reportsFiled            Report[]                  @relation("ReportReporter")
+  reportEvents            ReportEvent[]             @relation("ReportEventActor")
+  documents               Document[]
+  auditLogs               AuditLog[]
+  blocksMade              Block[]                   @relation("Blocker")
+  blocksReceived          Block[]                   @relation("Blocked")
+  passwordResetTokens     PasswordResetToken[]
+  emailVerificationTokens EmailVerificationToken[]
+  referrerSubscription    ReferrerSubscription?
+  referrerPayments        ReferrerPayment[]
+  clients                 Client[]                  @relation("ReferrerClients")
+  clientSharesSent        ClientShare[]             @relation("ClientSharesSent")
 
   @@index([role, status])
 }
 
 model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId, expiresAt])
+}
+
+model EmailVerificationToken {
   id        String    @id @default(cuid())
   userId    String
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -764,36 +778,36 @@ model Notification {
 
 /// Plan catalogue. Editable by admins; prices are placeholders until billing is live.
 model Membership {
-  id                String             @id @default(cuid())
-  tier              MembershipTier     @unique
+  id                 String             @id @default(cuid())
+  tier               MembershipTier     @unique
   /// Provider plans gate listings/rooms/staff; referrer plans gate clients and
   /// profile shares. See `audience` below.
-  audience          MembershipAudience @default(PROVIDER)
-  name              String
-  priceMonthly      Int
-  priceYearly       Int?
-  maxListings       Int
-  maxRooms          Int
-  maxStaff          Int
-  maxPhotos         Int            @default(15)
-  videoUploads      Boolean        @default(false)
-  analytics         Boolean        @default(false)
-  priorityPlacement Boolean        @default(false)
-  featuredCredits   Int            @default(0)
-  enhancedProfile   Boolean        @default(false)
-  prioritySupport   Boolean        @default(false)
-  externalPriceId   String?
-  description       String?
-  active            Boolean            @default(true)
+  audience           MembershipAudience @default(PROVIDER)
+  name               String
+  priceMonthly       Int
+  priceYearly        Int?
+  maxListings        Int
+  maxRooms           Int
+  maxStaff           Int
+  maxPhotos          Int                @default(15)
+  videoUploads       Boolean            @default(false)
+  analytics          Boolean            @default(false)
+  priorityPlacement  Boolean            @default(false)
+  featuredCredits    Int                @default(0)
+  enhancedProfile    Boolean            @default(false)
+  prioritySupport    Boolean            @default(false)
+  externalPriceId    String?
+  description        String?
+  active             Boolean            @default(true)
   /// Referrer-plan-only: how many active clients a referrer on this plan can
   /// hold at once. -1 is unlimited. Ignored for provider plans.
-  maxClients        Int                @default(-1)
+  maxClients         Int                @default(-1)
   /// Referrer-plan-only: how many provider organisations a referrer can share
   /// a client profile with at once, per client. -1 is unlimited.
-  maxSharesPerClient Int               @default(-1)
+  maxSharesPerClient Int                @default(-1)
   /// Referrer-plan-only: priority routing badge shown to providers on
   /// referrals from this plan, and priority ordering in provider inboxes.
-  priorityRouting   Boolean            @default(false)
+  priorityRouting    Boolean            @default(false)
 
   subscriptions         Subscription[]
   referrerSubscriptions ReferrerSubscription[]
@@ -842,19 +856,19 @@ model ReferrerSubscription {
 }
 
 model ReferrerPayment {
-  id                     String                @id @default(cuid())
-  userId                 String
-  user                   User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  subscriptionId         String?
-  subscription           ReferrerSubscription? @relation(fields: [subscriptionId], references: [id])
-  kind                   PaymentKind           @default(SUBSCRIPTION)
-  amount                 Int
-  currency               String                @default("GBP")
-  status                 PaymentStatus         @default(PENDING)
-  description            String?
-  externalPaymentId      String?               @unique
-  invoiceUrl             String?
-  createdAt              DateTime              @default(now())
+  id                String                @id @default(cuid())
+  userId            String
+  user              User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subscriptionId    String?
+  subscription      ReferrerSubscription? @relation(fields: [subscriptionId], references: [id])
+  kind              PaymentKind           @default(SUBSCRIPTION)
+  amount            Int
+  currency          String                @default("GBP")
+  status            PaymentStatus         @default(PENDING)
+  description       String?
+  externalPaymentId String?               @unique
+  invoiceUrl        String?
+  createdAt         DateTime              @default(now())
 }
 
 model Payment {
@@ -876,26 +890,26 @@ model Payment {
 // ---------------------------------------------------------------- trust & safety
 
 model VerificationRequest {
-  id          String             @id @default(cuid())
-  type        VerificationType   @default(COMPANY)
-  companyId   String
-  company     Company            @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  propertyId  String?
-  status      VerificationStatus @default(PENDING)
-  submittedBy String?
-  reviewedBy  String?
-  reviewedAt  DateTime?
-  note        String?
+  id                    String             @id @default(cuid())
+  type                  VerificationType   @default(COMPANY)
+  companyId             String
+  company               Company            @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  propertyId            String?
+  status                VerificationStatus @default(PENDING)
+  submittedBy           String?
+  reviewedBy            String?
+  reviewedAt            DateTime?
+  note                  String?
   reviewNote            String?
   insuranceExpiresAt    DateTime?
   declarationAcceptedAt DateTime?
-  checklistVersion      String  @default("2026-09")
-  registrationChecked   Boolean @default(false)
-  insuranceChecked      Boolean @default(false)
-  governanceChecked     Boolean @default(false)
-  safeguardingChecked   Boolean @default(false)
-  identityChecked       Boolean @default(false)
-  createdAt   DateTime           @default(now())
+  checklistVersion      String             @default("2026-09")
+  registrationChecked   Boolean            @default(false)
+  insuranceChecked      Boolean            @default(false)
+  governanceChecked     Boolean            @default(false)
+  safeguardingChecked   Boolean            @default(false)
+  identityChecked       Boolean            @default(false)
+  createdAt             DateTime           @default(now())
 
   documents Document[]
 }
@@ -914,6 +928,7 @@ model Report {
   updatedAt  DateTime         @default(now()) @updatedAt
   archivedAt DateTime?
   events     ReportEvent[]
+
   @@index([status])
   @@index([archivedAt, createdAt])
 }

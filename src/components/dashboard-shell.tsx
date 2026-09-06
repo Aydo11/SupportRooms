@@ -73,6 +73,20 @@ export function StatCard({ label, value, hint, compact = false }: { label: strin
   );
 }
 
+export function MetricBar({ label, value, total, tone = "bg-pine" }: { label: string; value: number; total: number; tone?: string }) {
+  const width = total > 0 ? Math.max(3, Math.round((value / total) * 100)) : 0;
+  return (
+    <div>
+      <div className="mb-1.5 flex items-center justify-between gap-4 text-[13px]">
+        <span className="text-ink-soft">{label}</span><span className="font-semibold text-ink">{value}</span>
+      </div>
+      <div className="h-2 overflow-hidden rounded-full bg-paper-sunk" aria-hidden="true">
+        <div className={`h-full rounded-full ${tone}`} style={{ width: `${width}%` }} />
+      </div>
+    </div>
+  );
+}
+
 export function DataTable({
   head,
   children,

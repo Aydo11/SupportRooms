@@ -7,6 +7,7 @@ import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/rbac";
 import { rateLimit } from "@/lib/rate-limit";
+import { sendEmail } from "@/lib/notify";
 import type { FormState } from "@/lib/validation";
 
 const input = z.object({
@@ -37,7 +38,7 @@ export async function createTeamMember(_previous: FormState, form: FormData): Pr
     await db.$transaction(async (tx) => {
       const freshActor = await tx.user.findUnique({ where: { id: actor.id } });
       if (!freshActor || freshActor.status !== "ACTIVE" || freshActor.role !== "ADMIN" || !freshActor.adminPermissions.includes("ALL") || freshActor.tokenVersion !== actor.tokenVersion) throw new Error("Access changed");
-      const user = await tx.user.create({ data: { ...identity, passwordHash, role: "ADMIN", adminPermissions: [permission] } });
+      const user = await tx.user.create({ data: { ...identity, passwordHash, role: "ADMIN", adminPermissions: [permission], emailVerificationRequired: true } });
       await tx.passwordResetToken.create({ data: {
         userId: user.id, tokenHash: createHash("sha256").update(token).digest("hex"),
         expiresAt: new Date(Date.now() + 60 * 60_000),
@@ -48,8 +49,20 @@ export async function createTeamMember(_previous: FormState, form: FormData): Pr
     if ((error as { code?: string }).code === "P2002") return { ok: false, message: "This email already has an account. Use a different work email." };
     return { ok: false, message: "Could not create the account. Please try again." };
   }
+  const appUrl = (process.env.APP_URL ?? "http://localhost:3000").replace(/\/$/, "");
+  const setupUrl = `${appUrl}/reset-password?token=${encodeURIComponent(token)}`;
+  try {
+    await sendEmail({
+      to: parsed.data.email,
+      subject: "You have been invited to the RoomsNow admin team",
+      text: `Set up your RoomsNow admin password using this one-use link (valid for one hour): ${setupUrl}`,
+      html: `<p>You have been invited to the RoomsNow admin team.</p><p><a href="${setupUrl}">Set up your account</a></p><p>This one-use link expires in one hour.</p>`,
+    });
+  } catch (error) {
+    console.error("Admin invitation email failed:", error);
+  }
   revalidatePath("/admin/team");
-  return { ok: true, message: "Account created. Share this private, one-use password setup link with your colleague. It expires in one hour; afterwards they can use Forgot password if email delivery is configured.", redirect: `/reset-password?token=${token}` };
+  return { ok: true, message: "Account created and the invitation email was sent. The private setup link is also shown below as a fallback.", redirect: `/reset-password?token=${token}` };
 }
 
 export async function updateTeamMember(_previous: FormState, form: FormData): Promise<FormState> {
