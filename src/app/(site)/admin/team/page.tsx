@@ -11,7 +11,7 @@ export default async function TeamPage() {
     where: { role: "ADMIN", deletedAt: null }, orderBy: { createdAt: "asc" }, take: 100,
     select: { id: true, firstName: true, lastName: true, email: true, adminPermissions: true, status: true },
   })]);
-  return <DashboardShell title="Team & permissions" subtitle="Build your RoomsNow platform team. Give each colleague their own login and the access they need." nav={nav} active="/admin/team">
+  return <DashboardShell title="Team & permissions" subtitle="Add administrators and moderators, give everyone their own verified login, and change or suspend access at any time." nav={nav} active="/admin/team">
     <div className="grid items-start gap-6 xl:grid-cols-2"><CreateTeamForm /><section className="space-y-3" aria-label="Team members">
       {users.map((user) => <article key={user.id} className="card p-5">
         <h2 className="text-lg">{user.firstName} {user.lastName}{user.id === actor.id ? " (you)" : ""}</h2>

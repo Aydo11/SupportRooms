@@ -17,6 +17,25 @@ import { bool, slugify, text } from "../form";
  */
 const DUMMY_HASH = "$2a$12$C6UzMDM.H6dfI/f/IKcEeO3Q6q1Bnp9YAqvB7WkQ0Pu2N0hEbXHQu";
 
+async function createEmailVerification(userId: string, email: string) {
+  const token = randomBytes(32).toString("base64url");
+  const tokenHash = createHash("sha256").update(token).digest("hex");
+  await db.$transaction([
+    db.emailVerificationToken.deleteMany({ where: { userId, usedAt: null } }),
+    db.emailVerificationToken.create({
+      data: { userId, tokenHash, expiresAt: new Date(Date.now() + 24 * 60 * 60_000) },
+    }),
+  ]);
+  const appUrl = (process.env.APP_URL ?? "http://localhost:3000").replace(/\/$/, "");
+  const verifyUrl = `${appUrl}/api/auth/verify-email?token=${encodeURIComponent(token)}`;
+  await sendEmail({
+    to: email,
+    subject: "Verify your RoomsNow email",
+    text: `Confirm your email address using this link (valid for 24 hours): ${verifyUrl}\n\nIf you did not create this account, you can ignore this email.`,
+    html: `<p>Welcome to RoomsNow. Confirm your email address using the button below.</p><p><a href="${verifyUrl}">Verify email address</a></p><p>This link expires in 24 hours. If you did not create this account, you can ignore this email.</p>`,
+  });
+}
+
 export async function registerAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const throttle = await rateLimit(`register:${await callerIp()}`, LIMITS.register);
   if (!throttle.ok) {
@@ -65,6 +84,7 @@ export async function registerAction(_prev: FormState, formData: FormData): Prom
       phone: data.phone || null,
       locationLabel: data.locationLabel || null,
       contactMethod: data.contactMethod,
+      emailVerificationRequired: true,
       profile:
         data.accountType === "USER"
           ? { create: { preferredLocations: data.locationLabel ? [data.locationLabel] : [] } }
@@ -97,7 +117,6 @@ export async function registerAction(_prev: FormState, formData: FormData): Prom
 
   if (data.accountType === "REFERRER") destination = "/referrals";
 
-  await createSession(user.id, user.role, user.tokenVersion);
   await audit({ actorId: user.id, action: "user.registered", targetType: "User", targetId: user.id });
   await notify({
     userId: user.id,
@@ -110,7 +129,12 @@ export async function registerAction(_prev: FormState, formData: FormData): Prom
     href: destination,
   });
 
-  redirect(destination);
+  try {
+    await createEmailVerification(user.id, user.email);
+  } catch (error) {
+    console.error("Registration verification email failed:", error);
+  }
+  redirect(`/verify-email?sent=1&email=${encodeURIComponent(user.email)}`);
 }
 
 export async function loginAction(_prev: FormState, formData: FormData): Promise<FormState> {
@@ -166,6 +190,13 @@ export async function loginAction(_prev: FormState, formData: FormData): Promise
 
   if (user.status === "SUSPENDED") {
     return { ok: false, errors: { form: "This account is suspended. Contact support." } };
+  }
+
+  if (user.emailVerificationRequired && !user.emailVerified) {
+    return {
+      ok: false,
+      errors: { form: "Verify your email before signing in. You can request a new verification link below." },
+    };
   }
 
   await resetRateLimit(`login:acct:${parsed.data.email}`);
@@ -301,6 +332,27 @@ export async function forgotPasswordAction(_prev: FormState, formData: FormData)
   return generic;
 }
 
+export async function resendVerificationAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const ip = await callerIp();
+  const throttle = await rateLimit(`email-verification:${ip}`, LIMITS.emailVerification);
+  if (!throttle.ok) return { ok: false, errors: { form: "Too many requests. Try again later." } };
+  const parsed = loginSchema.shape.email.safeParse(text(formData, "email"));
+  if (!parsed.success) return { ok: false, errors: { email: "Enter a valid email address." } };
+  const generic = { ok: true, message: "If that account still needs verification, a new link has been sent." } satisfies FormState;
+  const user = await db.user.findUnique({
+    where: { email: parsed.data },
+    select: { id: true, email: true, emailVerified: true, deletedAt: true, status: true },
+  });
+  if (!user || user.emailVerified || user.deletedAt || user.status !== "ACTIVE") return generic;
+  try {
+    await createEmailVerification(user.id, user.email);
+    await audit({ actorId: user.id, action: "auth.email_verification_resent", targetType: "User", targetId: user.id });
+  } catch (error) {
+    console.error("Verification email resend failed:", error);
+  }
+  return generic;
+}
+
 export async function resetPasswordAction(_prev: FormState, formData: FormData): Promise<FormState> {
   const token = text(formData, "token");
   const newPassword = text(formData, "password");
@@ -325,7 +377,7 @@ export async function resetPasswordAction(_prev: FormState, formData: FormData):
     if (!claimed.count) return false;
     await transaction.user.update({
       where: { id: reset.userId },
-      data: { passwordHash, passwordChangedAt: new Date(), tokenVersion: { increment: 1 } },
+      data: { passwordHash, passwordChangedAt: new Date(), emailVerified: new Date(), tokenVersion: { increment: 1 } },
     });
     return true;
   });

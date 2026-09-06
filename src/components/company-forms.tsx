@@ -1,5 +1,5 @@
 "use client";
-import { useActionState } from "react";
+import { useActionState, useEffect, useState } from "react";
 
 import { requestVerificationAction, updateCompanyAction } from "@/server/actions/company";
 import { CheckGroup, Field, FormError, FormSuccess, SubmitButton } from "./ui";
@@ -116,9 +116,32 @@ export function CompanyForm({
 
 export function VerificationForm() {
   const [state, action] = useActionState(requestVerificationAction, { ok: false });
+  const [selectedFiles, setSelectedFiles] = useState<Record<string, File[]>>({});
+
+  useEffect(() => {
+    if (state.ok) setSelectedFiles({});
+  }, [state.ok]);
+
+  function rememberFiles(name: string, list: FileList | null) {
+    setSelectedFiles((current) => ({ ...current, [name]: list ? Array.from(list) : [] }));
+  }
+
+  function submitWithRememberedFiles(formData: FormData) {
+    for (const [name, files] of Object.entries(selectedFiles)) {
+      formData.delete(name);
+      for (const file of files) formData.append(name, file);
+    }
+    action(formData);
+  }
+
+  function fileSummary(name: string) {
+    const files = selectedFiles[name] ?? [];
+    if (!files.length) return null;
+    return <span className="mt-1 block text-[12px] font-medium text-pine-dark">Selected: {files.map((file) => file.name).join(", ")}</span>;
+  }
 
   return (
-    <form action={action} className="space-y-4">
+    <form action={submitWithRememberedFiles} className="space-y-4">
       <FormError message={state.errors?.form} />
       <FormSuccess message={state.ok ? state.message : undefined} />
 
@@ -141,10 +164,11 @@ export function VerificationForm() {
               id={document.input}
               name={document.input}
               type="file"
-              required
+              onChange={(event) => rememberFiles(document.input, event.currentTarget.files)}
               accept="application/pdf,image/jpeg,image/png,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
               className="field"
             />
+            {fileSummary(document.input)}
           </Field>
         ))}
       </div>
@@ -166,15 +190,18 @@ export function VerificationForm() {
               id={document.input}
               name={document.input}
               type="file"
+              onChange={(event) => rememberFiles(document.input, event.currentTarget.files)}
               accept="application/pdf,image/jpeg,image/png,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
               className="field"
             />
+            {fileSummary(document.input)}
           </Field>
         ))}
       </div>
 
       <Field label="Additional due-diligence evidence" name="additionalDocuments" hint="Optional policies, accreditations or commissioning evidence. Up to five files.">
-        <input id="additionalDocuments" name="additionalDocuments" type="file" multiple accept="application/pdf,image/jpeg,image/png,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" className="field" />
+        <input id="additionalDocuments" name="additionalDocuments" type="file" multiple onChange={(event) => rememberFiles("additionalDocuments", event.currentTarget.files)} accept="application/pdf,image/jpeg,image/png,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" className="field" />
+        {fileSummary("additionalDocuments")}
       </Field>
 
       <Field label="Anything we should know" name="note">

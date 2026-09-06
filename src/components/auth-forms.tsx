@@ -3,7 +3,7 @@
 import { useSearchParams } from "next/navigation";
 import { useState, useActionState } from "react";
 import Link from "next/link";
-import { forgotPasswordAction, loginAction, registerAction, resetPasswordAction } from "@/server/actions/auth";
+import { forgotPasswordAction, loginAction, registerAction, resendVerificationAction, resetPasswordAction } from "@/server/actions/auth";
 import { Field, FormError, FormSuccess, SubmitButton } from "./ui";
 import { ORG_TYPES } from "@/lib/taxonomy";
 
@@ -55,6 +55,20 @@ export function ForgotPasswordForm() {
           <SubmitButton className="btn-primary w-full" pendingLabel="Sending…">Send reset link</SubmitButton>
         </>
       )}
+    </form>
+  );
+}
+
+export function ResendVerificationForm({ initialEmail = "" }: { initialEmail?: string }) {
+  const [state, action] = useActionState(resendVerificationAction, { ok: false });
+  return (
+    <form action={action} className="mt-6 space-y-4">
+      <FormError message={state.errors?.form} />
+      <FormSuccess message={state.ok ? state.message : undefined} />
+      <Field label="Email address" name="email" error={state.errors?.email}>
+        <input id="verification-email" name="email" type="email" defaultValue={initialEmail} autoComplete="email" required className="field" />
+      </Field>
+      <SubmitButton className="btn-secondary w-full" pendingLabel="Sending…">Send a new verification link</SubmitButton>
     </form>
   );
 }

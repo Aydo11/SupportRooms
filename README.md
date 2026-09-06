@@ -153,11 +153,16 @@ login, messaging and upload limits consistent across every instance. Database in
 main listing, availability and media queries, and repeated advert views are de-duplicated for 30
 minutes to avoid a write on every refresh.
 
-### Sign-in, password reset and payments
+### Sign-in, email verification, password reset and payments
 
 - Google sign-in works for an existing RoomsNow account whose email is verified by Google.
   Create OAuth web credentials, set `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`, and add
-  `https://YOUR-DOMAIN/api/auth/google/callback` as an authorised redirect URI.
+  `https://www.roomsnow.co.uk/api/auth/google/callback` as an authorised redirect URI. Set
+  `APP_URL=https://www.roomsnow.co.uk` so the callback address matches exactly.
+- New password accounts must confirm a hashed, single-use email link before signing in. Links
+  expire after 24 hours and can be resent without revealing whether an account exists. Configure
+  `EMAIL_DRIVER=resend`, `RESEND_API_KEY` and a domain-verified `EMAIL_FROM`; the `console` driver
+  is development-only and cannot deliver a link to a real user.
 - Forgotten-password links are hashed in the database, expire after one hour and can only be used
   once. Set `EMAIL_DRIVER=resend`, `RESEND_API_KEY` and a verified `EMAIL_FROM` address for delivery.
 - Set `BILLING_DRIVER=stripe`, the Stripe secret/webhook secrets and the Professional/Business Price
@@ -178,7 +183,7 @@ next to the data rather than in middleware, private files stored outside the web
 root and served only through a permission-checked audited route, uploads verified
 by magic bytes, `sanitize-html` on the one HTML input, CSP and HSTS headers,
 rate limiting on every abusable action, one-hour single-use password resets, and no raw SQL anywhere.
-Missing: registration email verification and MFA.
+Missing: MFA for administrator accounts.
 
 ## Privacy decisions worth knowing
 
@@ -211,5 +216,5 @@ adverts are always labelled. Keep all three of those honest if you extend this.
 - Configure Stripe products, webhook signing and Resend before accepting payment or password resets.
 - A tile provider for the map if you want a basemap rather than plotted coordinates.
 - Tests. There are none.
-- Registration email verification and MFA (see SECURITY.md).
+- MFA for administrator accounts (see SECURITY.md).
 - Automated unit, integration, accessibility and load tests in CI.

@@ -32,6 +32,13 @@ bcrypt comparison runs when it doesn't, so response timing doesn't leak
 registration status either. The post-login `next` parameter is validated against
 protocol-relative and backslash tricks, not just a leading slash.
 
+**Email ownership.** New password accounts cannot sign in until they follow a
+hashed, single-use verification link delivered to the supplied mailbox. Links
+expire after 24 hours, resends are rate-limited, and resend responses do not
+reveal whether an account exists. Existing accounts created before this control
+was introduced remain accessible; administrators can review them separately.
+Google sign-in accepts only an identity token whose email is verified by Google.
+
 **Authorisation.** Enforced in `src/lib/rbac.ts`, next to the data, not in
 middleware — a matcher is too easy to bypass with a route it doesn't cover. Pages
 call `requireUser` / `requireCompany` / `requireReferrer` / `requireAdmin`, and
@@ -84,27 +91,25 @@ pins sit on the postcode, not the door.
 
 ## Not done yet — do these before real data
 
-1. **No registration email verification.** Password resets use hashed, single-use,
-   one-hour tokens, but new registrations still trust the supplied address.
-2. **No MFA.** Admin accounts especially should have TOTP.
-3. **Shared rate limiting must be configured.** The Upstash driver is implemented,
+1. **No MFA.** Admin accounts especially should have TOTP.
+2. **Shared rate limiting must be configured.** The Upstash driver is implemented,
    but production remains per-instance until its environment variables are set.
-4. **The password deny-list is ten entries.** Replace it with a k-anonymity
+3. **The password deny-list is ten entries.** Replace it with a k-anonymity
    lookup against Have I Been Pwned's range API.
-5. **CSP allows `'unsafe-inline'` for scripts.** Move to a per-request nonce and
+4. **CSP allows `'unsafe-inline'` for scripts.** Move to a per-request nonce and
    add a reporting endpoint.
-6. **No dependency scanning or CI.** Add `npm audit`, Dependabot and a secret
+5. **No dependency scanning or CI.** Add `npm audit`, Dependabot and a secret
    scanner.
-7. **No encryption at rest beyond the database's own.** Referral attachments are
+6. **No encryption at rest beyond the database's own.** Referral attachments are
    plain files on disk. Consider envelope encryption for the private bucket.
-8. **No penetration test.** Nothing here has been tested by anyone but its
+7. **No penetration test.** Nothing here has been tested by anyone but its
    author. For a service holding this kind of data, get one.
-9. **No backup or retention policy in code.** Deletion soft-deletes and keeps a
+8. **No backup or retention policy in code.** Deletion soft-deletes and keeps a
    minimal record for 30 days; nothing purges it yet. Write the cron job.
-10. **Logging goes to the console.** Ship it somewhere durable, and make sure it
+9. **Logging goes to the console.** Ship it somewhere durable, and make sure it
     never captures message bodies or referral contents.
 
 ## Reporting
 
-Nothing here is a real service yet. If it becomes one, put a monitored address in
-this section and a `/.well-known/security.txt` pointing at it.
+Report suspected security issues privately to `info@roomsnow.co.uk`. Do not send
+passwords, identity documents or sensitive client information in the first email.
